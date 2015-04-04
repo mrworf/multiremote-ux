@@ -1,0 +1,13 @@
+multiRemote-UX requires the following libraries:
+
+- Semantic-UI (http://semantic-ui.com/)
+- jQuery (https://jquery.com/)
+- jStorage (http://www.jstorage.info/)
+- JSON2 (https://github.com/douglascrockford/JSON-js)
+
+Unpack everything in the dependencies folder (where you found this readme)
+and then make the following symlinks (or rename folders):
+
+Semantic-UI    -> Semantic-UI-X.Y.Z
+jquery2.min.js -> jquery-X.Y.Z.min.js
+
