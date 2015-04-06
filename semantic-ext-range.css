@@ -1,0 +1,46 @@
+/*
+  Use like so:
+  <div class="ui slider range">
+    <input type="range" />
+  </div>
+
+  See https://gist.github.com/KuoE0/8346849
+*/
+
+.ui.slider.range input[type="range"][orient=vertical] {
+  writing-mode: bt-lr; /* IE */
+  -webkit-appearance: slider-vertical; /* WebKit */
+  width: 8px;
+  height: 175px;
+  padding: 0 5px;
+}
+
+.ui.slider.range input[type="range"] {
+  -webkit-appearance: none;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 50rem;
+  border-color: rgba(0, 0, 0, 0.1);
+  padding: 3px 5px;
+}
+
+.ui.slider.range input[type="range"]::-moz-range-track {
+  background: none;
+  border: none;
+}
+
+.ui.slider.range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  background: #89B84C;
+  border-radius: 50rem;
+  height: 0.7em;
+  width: 0.7em;
+}
+
+.ui.slider.range input[type="range"]::-moz-range-thumb {
+  background: #89B84C;
+  border-color: #89B84C;
+  border-radius: 50rem;
+  height: 0.7em;
+  width: 0.7em;
+}
