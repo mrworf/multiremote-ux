@@ -1,3 +1,20 @@
 html, body {
-  font-size: 2em;
+  font-size: 1rem;
+  margin: 0.3rem;
+  overflow:hidden;
+  /*
+  background-color: #666666;
+  color: white;
+  */
+}
+
+.mr-scenes {
+  min-width: 15rem;
+  width: 20rem;
+  float: left;
+  margin-bottom: 100%;
+}
+
+.mr-controls {
+  vertical-align: top;
 }
