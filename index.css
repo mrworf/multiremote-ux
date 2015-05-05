@@ -1,20 +1,31 @@
-html, body {
-  font-size: 1rem;
-  margin: 0.3rem;
-  overflow:hidden;
-  /*
-  background-color: #666666;
-  color: white;
-  */
+body {
+  overflow: hidden;
+  padding-top: 70px;
+  font-size: 20px;
 }
 
-.mr-scenes {
-  min-width: 15rem;
-  width: 20rem;
-  float: left;
-  margin-bottom: 100%;
+.container {
+  width: 100%;
 }
 
-.mr-controls {
-  vertical-align: top;
+ul.dropdown-menu {
+  font-size: 20px;
+}
+
+li.dropdown-header {
+  font-size: 18px;
+}
+
+a.activity {
+  margin: 10px;
+  min-width: 154px;
+  height: 199px;
+  text-align: center;
+}
+
+div.activity-icon {
+  width: 100%; 
+  height: 128px;
+  line-height: 128px;
+  margin: auto;
 }

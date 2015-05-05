@@ -1,0 +1,90 @@
+body {
+  .modal {
+    @include box-shadow(none);
+    @include background-clip(border-box);
+    @include border-radius(0px);
+    border: 1px solid black;
+  }
+  .alert {
+    @include border-radius(0px);
+    text-shadow: none;
+  }
+  .nav-pills {
+    background: #EEE;
+    padding: 3px;
+    text-transform: uppercase;
+    font-size: smaller;
+    li.active {
+      border-bottom: 5px solid #339BB9;
+      a, a:hover {
+        color: black;
+        background: transparent;
+      }
+    }
+    li > a {
+      @include border-radius(0px);
+      border-right: 1px solid #CCC;
+      border-left: 1px solid #CCC;
+      background: #EEE;
+      margin-right: 0px;
+      margin-left: 0px;
+      padding-top: 4px;
+      padding-bottom: 4px;
+      color: black;
+    }
+  }
+  #mobile-footer {
+    height: 35px;
+    .navbar-inner {
+      @include border-radius(0px);
+      @include background-image(none);
+      background-color: #2C2C2C;
+    }
+    .nav {
+      text-transform: uppercase;
+      font-size: smaller;
+      padding-top: 0px;
+      li.active {
+        @include border-radius(0px);
+        @include background-image(none);
+        border-bottom: 5px solid #339BB9;
+        background: transparent;
+        a, a:hover {
+          color: white;
+          background: transparent;
+          @include border-radius(0px);
+        }
+      }
+      li > a {
+        padding: 3px 10px 3px 10px;
+        border-left: 1px solid #555;
+        border-right: 1px solid #555;
+        color: #CCC;
+      }
+    }
+  }
+  .btn {
+    border-radius: 0px;
+    @include box-shadow(none);
+    @include background-image(none);
+    text-shadow: none;
+    background-color: #eee;
+  }
+  .actionsbar .btn {
+    background-color: #339BB9;
+  }
+  .btn-primary {
+    background-color: #339BB9;
+  }
+  .page-header {
+    padding-bottom: 2px;
+    h3 {
+      font-size: 16px;
+      text-transform: uppercase;
+      color: #999;
+    }
+  }
+  .stream-item .stream-habit {
+    @include border-radius(0px);
+  }
+}
