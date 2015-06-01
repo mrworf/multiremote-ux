@@ -23,18 +23,7 @@
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
         <a class="navbar-brand" href="#">multiREMOTE</a>
-        <ul class="nav navbar-nav">
-          <li class="dropdown">
-            <a href="#about" style="display: inline-block; padding-right: 0px">Livingroom: Cinema</a>
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" style="display: inline-block"><span class="caret"></span></a>
-            <ul class="dropdown-menu" role="menu">
-              <li class="dropdown-header">Pick activity</li>
-              <li><a href="#">Cinema</a></li>
-              <li><a href="#">TV</a></li>
-            </ul>
-          </li>
-          <li><a href="#about">Kitchen</a></li>
-          <li><a href="#contact">Patio</a></li>
+        <ul class="nav navbar-nav" id="zone-list">
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li><a href="#"><span class="glyphicon glyphicon-off"></span> All off</a></li>
@@ -46,10 +35,18 @@
       <!-- Activity selector with info -->
       <div class="well well-sm" style="text-align: center; display: inline-block; float: left; width: 100%;">
         <h1>Choose activity</h1>
+
+        <a class="btn btn-default activity active" href="" role="button">
+          <div class="activity-icon">
+            <img src="img/standby.png" />
+          </div>
+          <h3>Standby</h3>
+        </a>
+
         <a class="btn btn-default activity" href="" role="button">
           <div class="activity-icon">
             <img src="img/spotify.png" />
-          </div>  
+          </div>
           <h3>Spotify</h3>
         </a>
 
@@ -63,35 +60,35 @@
         <a class="btn btn-default activity" href="" role="button">
           <div class="activity-icon">
             <img src="img/ps3.png" />
-          </div> 
+          </div>
           <h3>Playstation 3</h3>
         </a>
 
         <a class="btn btn-default activity" href="" role="button">
           <div class="activity-icon">
             <img src="img/ps4.png" />
-          </div>  
+          </div>
           <h3>Playstation 4</h3>
         </a>
 
         <a class="btn btn-default activity" href="" role="button">
           <div class="activity-icon">
             <img src="img/netflix.png" />
-          </div>  
+          </div>
           <h3>Netflix</h3>
         </a>
 
         <a class="btn btn-default activity" href="" role="button">
           <div class="activity-icon">
             <img src="img/amazon.png" />
-          </div>  
+          </div>
           <h3>Amazon Prime</h3>
         </a>
 
         <a class="btn btn-default activity" href="" role="button">
           <div class="activity-icon">
             <img src="img/tube.png" />
-          </div>  
+          </div>
           <h3>YouTube</h3>
         </a>
       </div>
@@ -115,7 +112,7 @@
         <br/>
         <div class="btn-group btn-group" role="group" aria-label="..." style="padding-top: 10px; width: 100%; padding-left: 10px; padding-right: 10px">
           <button type="button" style="width: 100%;" class="btn btn-default"><span class="glyphicon glyphicon-eject" aria-hidden="true"></span></button>
-        </div> 
+        </div>
       </div>
 
       <!-- Navigation Control -->
@@ -220,28 +217,89 @@
     </div> <!-- /container -->
 
 
+    <!-- Working indicator -->
+    <div style="width: 50%; height: 58px; overflow: hidden; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal" id="busyIndicator" data-backdrop="static" data-keyboard="false">
+      <div class="modal-body">
+        <div class="progress">
+          <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="font-size: 18px; width:100%">Initializing</div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="dependencies/jquery2.min.js"></script>
     <script src="dependencies/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript">
+      // Remove hover functionality since it seems to slow down Android devices
       for (var i = 0; i != document.styleSheets.length; i++) {
-        var rulesToLoose = []; 
+        var rulesToLoose = [];
         for (var ii = 0; ii != document.styleSheets[i].cssRules.length; ++ii) {
-          if (document.styleSheets[i].cssRules[ii].selectorText && document.styleSheets[i].cssRules[ii].selectorText.indexOf(':hover') > 0) { 
+          if (document.styleSheets[i].cssRules[ii].selectorText && document.styleSheets[i].cssRules[ii].selectorText.indexOf(':hover') > 0) {
             rulesToLoose.push(ii);
           }
         }
         for (var ii = rulesToLoose.length-1; ii != -1; --ii) {
           if (document.styleSheets[i].deleteRule) {
-            console.log("i = " + i + " ii = " + ii);
             document.styleSheets[i].deleteRule(rulesToLoose[ii]);
           } else if (document.styleSheets[i].removeRule) {
             document.styleSheets[i].removeRule(rulesToLoose[ii]);
           }
-      } 
+      }
+
+      $("#busyIndicator").modal();
     }
+    </script>
+    <script src="multiremoteclient.js"></script>
+    <script src="buttonrepeater.js"></script>
+    <script src="resultwrapper.js"></script>
+    <script type="text/javascript">
+      var result = new ResultWrapper();
+      var app = new MultiRemoteClient("magi.sfo.sensenet.nu", function(a,b,c){result.handler(a,b,c);});
+
+      // init the client and remove the modal once done
+      result.wrap(function(){return app.init();}, function() {
+        z = app.getZones();
+        for (var e in z) {
+          if (z.hasOwnProperty(e)) {
+            if (app.hasSubZones(e))
+              addSubZone(z[e], e, app.getSubZones(e));
+            else
+              addZone(z[e], e);
+          }
+        }
+        console.log(z);
+        $("#busyIndicator").modal("hide");
+      });
+
+      function addZone(strName, strId) {
+        $("#zone-list").append('<li><a href="#">' + strName + '</a></li>');
+      }
+
+      function addSubZone(strName, strId, lstSubZones) {
+        var element = '<li class="dropdown">';
+        element += '<a href="#" style="display: inline-block; padding-right: 0px" id="' + strId + '">' + strName + '</a>';
+        element += '<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" style="display: inline-block"><span class="caret"></span></a>';
+        element += '<ul class="dropdown-menu" role="menu">';
+        element += '<li class="dropdown-header">Pick activity</li>';
+
+        for (e in lstSubZones) {
+          if (lstSubZones.hasOwnProperty(e)) {
+            element += '<li><a href="#">' + lstSubZones[e] + '</a></li>'
+          }
+        }
+
+        element +=  '</ul></li>';
+
+        $("#zone-list").append(element);
+      }
+
+      /*
+          <li><a href="#about">Kitchen</a></li>
+          <li><a href="#contact">Patio</a></li>
+        */
     </script>
   </body>
 </html>

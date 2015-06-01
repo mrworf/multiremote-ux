@@ -23,8 +23,12 @@ a.activity {
   text-align: center;
 }
 
+a.active {
+  border: 5px solid purple;
+}
+
 div.activity-icon {
-  width: 100%; 
+  width: 100%;
   height: 128px;
   line-height: 128px;
   margin: auto;
