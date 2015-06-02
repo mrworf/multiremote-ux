@@ -18,7 +18,7 @@
   </head>
 
   <body>
-
+    <div id="blockui"></div>
     <!-- Fixed navbar -->
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
@@ -31,189 +31,7 @@
       </div>
     </nav>
 
-    <div class="container">
-      <!-- Activity selector with info -->
-      <div class="well well-sm" style="text-align: center; display: inline-block; float: left; width: 100%;">
-        <h1>Choose activity</h1>
-
-        <a class="btn btn-default activity active" href="" role="button">
-          <div class="activity-icon">
-            <img src="img/standby.png" />
-          </div>
-          <h3>Standby</h3>
-        </a>
-
-        <a class="btn btn-default activity" href="" role="button">
-          <div class="activity-icon">
-            <img src="img/spotify.png" />
-          </div>
-          <h3>Spotify</h3>
-        </a>
-
-        <a class="btn btn-default activity" href="" role="button">
-          <div class="activity-icon">
-            <img src="img/plex.png" />
-          </div>
-          <h3>Plex Media Center</h3>
-        </a>
-
-        <a class="btn btn-default activity" href="" role="button">
-          <div class="activity-icon">
-            <img src="img/ps3.png" />
-          </div>
-          <h3>Playstation 3</h3>
-        </a>
-
-        <a class="btn btn-default activity" href="" role="button">
-          <div class="activity-icon">
-            <img src="img/ps4.png" />
-          </div>
-          <h3>Playstation 4</h3>
-        </a>
-
-        <a class="btn btn-default activity" href="" role="button">
-          <div class="activity-icon">
-            <img src="img/netflix.png" />
-          </div>
-          <h3>Netflix</h3>
-        </a>
-
-        <a class="btn btn-default activity" href="" role="button">
-          <div class="activity-icon">
-            <img src="img/amazon.png" />
-          </div>
-          <h3>Amazon Prime</h3>
-        </a>
-
-        <a class="btn btn-default activity" href="" role="button">
-          <div class="activity-icon">
-            <img src="img/tube.png" />
-          </div>
-          <h3>YouTube</h3>
-        </a>
-      </div>
-
-      <!-- Main playback control -->
-      <div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <div class="btn-group btn-group-lg" role="group" aria-label="...">
-          <button type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span></button>
-          <button type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
-          <button type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
-          <button type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span></button>
-        </div>
-        <br/>
-        <div class="btn-group btn-group-lg" role="group" aria-label="..." style="padding-top: 10px;">
-          <button type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>
-          <button type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-backward" aria-hidden="true"></span></button>
-          <button type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>
-          <button type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-forward" aria-hidden="true"></span></button>
-          <button type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-fast-forward" aria-hidden="true"></span></button>
-        </div>
-        <br/>
-        <div class="btn-group btn-group" role="group" aria-label="..." style="padding-top: 10px; width: 100%; padding-left: 10px; padding-right: 10px">
-          <button type="button" style="width: 100%;" class="btn btn-default"><span class="glyphicon glyphicon-eject" aria-hidden="true"></span></button>
-        </div>
-      </div>
-
-      <!-- Navigation Control -->
-      <div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <table style="float: left">
-          <tr>
-            <td rowspan="3" style="border-right: 1px solid #b2b2b2; padding: 3px; padding-right: 10px">
-              <button type="button" style="float: left; height: 4em; margin-bottom: 3px;" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>
-              <br>
-              <button type="button" style="float: left; height: 4em; margin-top: 3px;" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>
-            </td>
-            <td style="padding: 3px; padding-left: 10px">
-            </td>
-            <td style="padding: 3px; vertical-align: bottom">
-                <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></button>
-            </td>
-            <td style="padding: 3px; padding-right: 10px">
-            </td>
-            <td rowspan="3" style="border-left: 1px solid #b2b2b2; padding-left: 10px">
-              <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">
-                <button type="button" class="btn btn-default">Home</button>
-                <button type="button" class="btn btn-default">Top menu</button>
-                <button type="button" class="btn btn-default">Menu</button>
-                <button type="button" class="btn btn-default">Back</button>
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding: 3px; padding-left: 10px">
-              <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button>
-            </td>
-            <td style="padding: 3px">
-              <button type="button" class="btn btn-default btn-lg">OK</button>
-            </td>
-            <td style="padding: 3px; padding-right: 10px">
-              <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding: 3px; padding-left: 10px">
-            </td>
-            <td style="padding: 3px; vertical-align: top">
-              <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></button>
-            </td>
-            <td style="padding: 3px; padding-right: 10px">
-            </td>
-          </tr>
-        </table>
-      </div>
-      <br clear="all">
-      <!-- Audio/Video settings -->
-      <div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <div class="btn-group btn-group-lg" role="group" aria-label="...">
-          <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span> Subtitle</button>
-          <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-music" aria-hidden="true"></span> Audio</button>
-          <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span> Angle</button>
-          <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Info</button>
-        </div>
-      </div>
-
-      <!-- Playback settings -->
-      <div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <div class="btn-group btn-group-lg" role="group" aria-label="...">
-          <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Shuffle</button>
-          <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-retweet" aria-hidden="true"></span> Repeat</button>
-        </div>
-      </div>
-
-      <!-- Volume controls -->
-      <div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">
-          <button type="button" style="height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span></button>
-          <button type="button" style="height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span></button>
-          <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span></button>
-        </div>
-      </div>
-
-      <!-- Text input -->
-      <div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <div class="input-group">
-          <input type="text" class="form-control" placeholder="Text input" aria-describedby="basic-addon2">
-          <span class="input-group-btn">
-            <button class="btn btn-default" type="button">Send</button>
-          </span>
-        </div>
-      </div>
-
-      <!-- App redirect -->
-      <div class="alert alert-info" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <h3>This activity is controlled from a separate screen.</h3>
-        <br/>
-        <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> Take me there</button>
-      </div>
-
-      <!-- No options redirect -->
-      <div class="alert alert-warning" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <h3>This activity has no controls</h3>
-      </div>
-
+    <div class="container" id="canvas">
     </div> <!-- /container -->
 
 
@@ -232,32 +50,53 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="dependencies/jquery2.min.js"></script>
     <script src="dependencies/bootstrap/js/bootstrap.min.js"></script>
-    <script type="text/javascript">
-      // Remove hover functionality since it seems to slow down Android devices
-      for (var i = 0; i != document.styleSheets.length; i++) {
-        var rulesToLoose = [];
-        for (var ii = 0; ii != document.styleSheets[i].cssRules.length; ++ii) {
-          if (document.styleSheets[i].cssRules[ii].selectorText && document.styleSheets[i].cssRules[ii].selectorText.indexOf(':hover') > 0) {
-            rulesToLoose.push(ii);
-          }
-        }
-        for (var ii = rulesToLoose.length-1; ii != -1; --ii) {
-          if (document.styleSheets[i].deleteRule) {
-            document.styleSheets[i].deleteRule(rulesToLoose[ii]);
-          } else if (document.styleSheets[i].removeRule) {
-            document.styleSheets[i].removeRule(rulesToLoose[ii]);
-          }
-      }
-
-      $("#busyIndicator").modal();
-    }
-    </script>
     <script src="multiremoteclient.js"></script>
+    <script src="multiremotetypes.js"></script>
     <script src="buttonrepeater.js"></script>
     <script src="resultwrapper.js"></script>
+    <script src="ux-objects.js"></script>
     <script type="text/javascript">
-      var result = new ResultWrapper();
+      var ux = new UXObjects();
       var app = new MultiRemoteClient("magi.sfo.sensenet.nu", function(a,b,c){result.handler(a,b,c);});
+      var result = new ResultWrapper(ux, 500);
+
+      ux.optimize();
+
+      function commandHandler(command) {
+        ux.vibrate(ux.VIBRATE_BTN);
+        console.log("Command = " + command);
+
+        result.wrap(function(){return app.issueCommand("scene", command);}, function(success, data) {
+          console.log("Command returned");
+        }, true);
+      }
+
+      function selectScene(scene) {
+        ux.vibrate(ux.VIBRATE_BTN);
+
+        result.wrap(function(){return app.selectScene(scene);}, function(success, data) {
+          // Alright! Now we need represent this somehow... this is what we've all been waiting for!
+          result.wrap(function(){return app.getCommands();}, function(success, data) {
+            // Lets see what we got
+            ux.clearCanvas();
+            ux.createPlaybackControls(data.scene, commandHandler);
+            ux.createNavigationControls(data.scene, commandHandler);
+          }, true);
+
+        }, true);
+      }
+
+      function selectZone(zone, subzone) {
+        ux.vibrate(ux.VIBRATE_BTN);
+
+        result.wrap(function(){return app.selectZone(zone);}, function(success, data) {
+          // Find out which scene we're using for this zone
+          result.wrap(function(){return app.getActiveScene(zone);}, function(success, data) {
+            scenes = app.getScenesForZone(zone);
+            ux.createSceneSelector(scenes, data, selectScene);
+          }, true);
+        }, true);
+      }
 
       // init the client and remove the modal once done
       result.wrap(function(){return app.init();}, function() {
@@ -265,41 +104,12 @@
         for (var e in z) {
           if (z.hasOwnProperty(e)) {
             if (app.hasSubZones(e))
-              addSubZone(z[e], e, app.getSubZones(e));
+              ux.addSubZone(z[e], e, app.getSubZones(e), selectZone);
             else
-              addZone(z[e], e);
+              ux.addZone(z[e], e, selectZone);
           }
         }
-        console.log(z);
-        $("#busyIndicator").modal("hide");
-      });
-
-      function addZone(strName, strId) {
-        $("#zone-list").append('<li><a href="#">' + strName + '</a></li>');
-      }
-
-      function addSubZone(strName, strId, lstSubZones) {
-        var element = '<li class="dropdown">';
-        element += '<a href="#" style="display: inline-block; padding-right: 0px" id="' + strId + '">' + strName + '</a>';
-        element += '<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" style="display: inline-block"><span class="caret"></span></a>';
-        element += '<ul class="dropdown-menu" role="menu">';
-        element += '<li class="dropdown-header">Pick activity</li>';
-
-        for (e in lstSubZones) {
-          if (lstSubZones.hasOwnProperty(e)) {
-            element += '<li><a href="#">' + lstSubZones[e] + '</a></li>'
-          }
-        }
-
-        element +=  '</ul></li>';
-
-        $("#zone-list").append(element);
-      }
-
-      /*
-          <li><a href="#about">Kitchen</a></li>
-          <li><a href="#contact">Patio</a></li>
-        */
+      }, true);
     </script>
   </body>
 </html>

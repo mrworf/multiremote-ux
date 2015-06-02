@@ -4,6 +4,10 @@ body {
   font-size: 20px;
 }
 
+h1,h2,h3 {
+  font-size: 20px;
+}
+
 .container {
   width: 100%;
 }
@@ -32,4 +36,16 @@ div.activity-icon {
   height: 128px;
   line-height: 128px;
   margin: auto;
+}
+
+#blockui {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  opacity: 0.0;
+  background-color: #000000;
+  z-index: 9999;
+  display: none;
 }
