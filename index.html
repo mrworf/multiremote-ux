@@ -44,6 +44,16 @@
       </div>
     </div>
 
+    <div style="width: 50%; height: 80%; overflow: hidden; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal fade" id="conflictResolution" data-backdrop="static" data-keyboard="false">
+      <div class="modal-body">
+        <span id="resolve-question">X conflicts with Y, how would you like to resolve this?</span>
+        <hr>
+        Resolve by...
+        <button id="resolve-cancel" type="button" style="margin-top: 10px; width: 100%" class="btn btn-default btn-lg">Cancel selection</button>
+        <button id="resolve-clone" type="button" style="margin-top: 10px; width: 100%" class="btn btn-primary btn-lg">Play on both</button>
+        <button id="resolve-unassign" type="button" style="margin-top: 10px; width: 100%" class="btn btn-warning btn-lg">Transfer here</button>
+      </div>
+    </div>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
@@ -64,19 +74,15 @@
 
       function sceneHandler(command) {
         ux.vibrate(ux.VIBRATE_BTN);
-        console.log("Command = " + command);
 
         result.wrap(function(){return app.issueCommand("scene", command);}, function(success, data) {
-          console.log("Command returned");
         }, true);
       }
 
       function zoneHandler(command) {
         ux.vibrate(ux.VIBRATE_BTN);
-        console.log("Command = " + command);
 
         result.wrap(function(){return app.issueCommand("zone", command);}, function(success, data) {
-          console.log("Command returned");
         }, true);
       }
 
@@ -85,15 +91,50 @@
         ux.launchPackage(packagename);
       }
 
-      function selectScene(scene) {
+      function conflictHandler(scene, choice) {
+        // In mose cases, you can just send the choice back...
         ux.vibrate(ux.VIBRATE_BTN);
 
-        result.wrap(function(){return app.selectScene(scene);}, function(success, data) {
+        if (choice == "clone") {
+          selectScene(scene, "clone");
+        } else if (choice == "unassign") {
+          selectScene(scene, "unassign");
+        } else {
+
+        }
+      }
+
+      function selectScene(scene, override) {
+        // Override is never set when called directly
+        if (undefined == override)
+          ux.vibrate(ux.VIBRATE_BTN);
+
+        result.wrap(function(){return app.selectScene(scene, override);}, function(success, data) {
           // Alright! Now we need represent this somehow... this is what we've all been waiting for!
-          if (scene != null) {
-            showCommands();
+          if (success) {
+            if (scene != null) {
+              showCommands();
+            } else {
+              showScenes();
+            }
           } else {
-            showScenes();
+            // Something went wrong...
+            if (data.hasOwnProperty("conflict")) {
+              // It's a conflict, show some reasonable error...
+              var want = app.getScene(scene).name;
+              var question = "Choosing " + want + " could conflict with ";
+              var count = data.conflict.length;
+              for(var z in data.conflict) {
+                question += app.getZone(data.conflict[z]).name
+                if (count == 2) {
+                  question += " and ";
+                } else if (count > 2) {
+                  question += ", ";
+                }
+                count--;
+              }
+              ux.showConflict(scene, question, data.conflict.length, conflictHandler);
+            }
           }
         }, true);
       }
@@ -111,6 +152,7 @@
           ux.createPlaybackControls(data.scene, sceneHandler);
           ux.createNavigationControls(data.scene, sceneHandler);
           ux.createApplicationLink(app.getScene(app.getCachedScene()), appHandler);
+          ux.renderSceneIcon(app.getScene(app.getCachedScene()));
         }, true);
       }
 

@@ -108,7 +108,6 @@ var UXObjects = function() {
    * @note Should be moved into the app instead and done ONCE
    */
   this.decodeHinting = function(hint) {
-    console.log(hint);
     var tmp = hint.split(",");
     var result = {};
     for (var t in tmp) {
@@ -390,7 +389,31 @@ var UXObjects = function() {
       element += '</div>';
       $('#canvas').append(element);
     }
+  }
 
+  this.showConflict = function(scene, question, nbrConflicts, handler) {
+    $('#resolve-question').text(question);
+    if (nbrConflicts > 1) {
+      $('#resolve-clone').text("Play on all")
+    } else {
+      $('#resolve-clone').text("Play on both")
+    }
+
+    $('#resolve-clone').unbind();
+    $('#resolve-unassign').unbind();
+    $('#resolve-cancel').unbind();
+
+    $('#resolve-clone').bind('click', {choice: "clone", scene: scene}, function(event){$('#conflictResolution').modal('hide'); handler(event.data.scene, event.data.choice);});
+    $('#resolve-unassign').bind('click', {choice: "unassign", scene: scene}, function(event){$('#conflictResolution').modal('hide'); handler(event.data.scene, event.data.choice);});
+    $('#resolve-cancel').bind('click', {choice: "cancel", scene: scene}, function(event){$('#conflictResolution').modal('hide'); handler(event.data.scene, event.data.choice);});
+
+    $('#conflictResolution').modal();
+  }
+
+  this.renderSceneIcon = function(scene) {
+    hint = this.decodeHinting(scene["ux-hint"]);
+    var element = '<div style="position: absolute; z-order: -9999; bottom: 0px; right: 0px; width: 136px; height: 136px; background-image: url(img/' + hint.icon + '.png);  background-repeat: no-repeat; opacity: 0.3"></div>';
+    $('#canvas').append(element);
   }
 }
 

@@ -19,13 +19,14 @@ var ResultWrapper = function(ux, timeout) {
   this.handler = function(id, success, data) {
     if (id in this.cmdmap) {
       state = this.cmdmap[id];
-      state.handler(success, data);
       if (state.timeout) {
+        console.log(state);
         clearTimeout(state.timerid);
         this.ux.showBusyIndicator(false);
         this.ux.blockUI(false);
       }
       delete this.cmdmap[id];
+      state.handler(success, data);
     }
   }
 
@@ -45,7 +46,8 @@ var ResultWrapper = function(ux, timeout) {
     this.cmdmap[id] = {handler: funcFollowUp, timeout: useTimeout, timerid: 0};
 
     if (useTimeout) {
-      this.cmdmap[id].timerid = setTimeout(function(){self2.ux.showBusyIndicator(true);}, this.timeout);
+      this.cmdmap[id].timerid = setTimeout(function(){console.log("Timeout!"); self2.ux.showBusyIndicator(true);}, this.timeout);
+      console.log("Timeout set: " + this.cmdmap[id].timerid);
       this.ux.blockUI(true);
     }
   }

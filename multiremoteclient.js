@@ -53,6 +53,10 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     return result;
   }
 
+  this.getZone = function(zone) {
+    return this.lstZones[zone];
+  }
+
   this.hasSubZones = function(zone) {
     return (this.lstZones[zone].hasOwnProperty("subzones"));
   }
@@ -98,15 +102,36 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     return id;
   }
 
-  this.selectScene = function(scene) {
+  /**
+   * ASYNC FUNCTION
+   *
+   * Selects a specific scene, with the option to provide conflict resolution
+   * options.
+   *
+   * @param scene Name of the scene or null if standby
+   * @param optOverride Either null or left out to perform normal selection
+   *
+   * @note Set override to "clone" to run same scene on more than one zone
+   *       or set it to unassign to shutdown the other zones.
+   */
+  this.selectScene = function(scene, optOverride) {
+    if (undefined == optOverride || null == optOverride)
+      optOverride = "";
+    else
+      optOverride = "/" + optOverride;
+
     // Select the scene
     self = this;
     id = this.getId();
 
     if (scene != null) {
-      this.execServer("/assign/" + this.currentZone + "/" + scene, function(data) {
-        self.currentScene = scene;
-        self.returnResult(id, true, null);
+      this.execServer("/assign/" + this.currentZone + "/" + scene + optOverride, function(data) {
+        if (data.hasOwnProperty("conflict")) {
+          self.returnResult(id, false, data);
+        } else {
+          self.currentScene = scene;
+          self.returnResult(id, true, data);
+        }
       });
     } else {
       this.execServer("/unassign/" + this.currentZone, function(data) {
