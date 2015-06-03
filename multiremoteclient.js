@@ -110,7 +110,7 @@ MultiRemoteClient = function(serverAddress, funcResults) {
       });
     } else {
       this.execServer("/unassign/" + this.currentZone, function(data) {
-        self.currentScene = scene;
+        self.currentScene = null;
         self.returnResult(id, true, null);
       });
     }
@@ -140,17 +140,31 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     return result;
   }
 
-  this.getActiveScene = function(zone) {
+  this.getActiveScene = function() {
     // Load the zone and scene list
     self = this;
     id = this.getId();
 
-    this.execServer("/zone/" + zone, function(data) {
+    this.execServer("/zone/" + this.currentZone, function(data) {
+      self.currentScene = data.scene;
       self.returnResult(id, true, data.scene);
     });
 
     return id;
   }
+
+  this.getCachedScene = function() {
+    return this.currentScene;
+  }
+
+  this.getCachedZone = function() {
+    return this.currentZone;
+  }
+
+  this.getScene = function(scene) {
+    return this.lstScenes[scene];
+  }
+
 
   this.issueCommand = function(type, command) {
     // Send command to active scene and zone

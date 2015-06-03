@@ -36,10 +36,10 @@
 
 
     <!-- Working indicator -->
-    <div style="width: 50%; height: 58px; overflow: hidden; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal" id="busyIndicator" data-backdrop="static" data-keyboard="false">
+    <div style="width: 50%; height: 58px; overflow: hidden; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal fade" id="busyIndicator" data-backdrop="static" data-keyboard="false">
       <div class="modal-body">
         <div class="progress">
-          <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="font-size: 18px; width:100%">Initializing</div>
+          <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="font-size: 18px; width:100%">...Please wait...</div>
         </div>
       </div>
     </div>
@@ -57,12 +57,12 @@
     <script src="ux-objects.js"></script>
     <script type="text/javascript">
       var ux = new UXObjects();
-      var app = new MultiRemoteClient("magi.sfo.sensenet.nu", function(a,b,c){result.handler(a,b,c);});
       var result = new ResultWrapper(ux, 500);
+      var app = new MultiRemoteClient("magi.sfo.sensenet.nu", function(a,b,c){result.handler(a,b,c);});
 
       ux.optimize();
 
-      function commandHandler(command) {
+      function sceneHandler(command) {
         ux.vibrate(ux.VIBRATE_BTN);
         console.log("Command = " + command);
 
@@ -71,19 +71,53 @@
         }, true);
       }
 
+      function zoneHandler(command) {
+        ux.vibrate(ux.VIBRATE_BTN);
+        console.log("Command = " + command);
+
+        result.wrap(function(){return app.issueCommand("zone", command);}, function(success, data) {
+          console.log("Command returned");
+        }, true);
+      }
+
+      function appHandler(packagename) {
+        ux.vibrate(ux.VIBRATE_BTN);
+        ux.launchPackage(packagename);
+      }
+
       function selectScene(scene) {
         ux.vibrate(ux.VIBRATE_BTN);
 
         result.wrap(function(){return app.selectScene(scene);}, function(success, data) {
           // Alright! Now we need represent this somehow... this is what we've all been waiting for!
-          result.wrap(function(){return app.getCommands();}, function(success, data) {
-            // Lets see what we got
-            ux.clearCanvas();
-            ux.createPlaybackControls(data.scene, commandHandler);
-            ux.createNavigationControls(data.scene, commandHandler);
-          }, true);
-
+          if (scene != null) {
+            showCommands();
+          } else {
+            showScenes();
+          }
         }, true);
+      }
+
+      function gotoStandby() {
+        selectScene(null);
+      }
+
+      function showCommands() {
+        result.wrap(function(){return app.getCommands();}, function(success, data) {
+          // Lets see what we got
+          ux.clearCanvas();
+          ux.renderSceneInfo(app.getScene(app.getCachedScene()), gotoStandby, showScenes);
+          ux.createVolumeControls(data.zone, zoneHandler);
+          ux.createPlaybackControls(data.scene, sceneHandler);
+          ux.createNavigationControls(data.scene, sceneHandler);
+          ux.createApplicationLink(app.getScene(app.getCachedScene()), appHandler);
+        }, true);
+      }
+
+      function showScenes() {
+        scenes = app.getScenesForZone(app.getCachedZone());
+        ux.clearCanvas();
+        ux.createSceneSelector(scenes, app.getCachedScene(), selectScene);
       }
 
       function selectZone(zone, subzone) {
@@ -91,9 +125,13 @@
 
         result.wrap(function(){return app.selectZone(zone);}, function(success, data) {
           // Find out which scene we're using for this zone
-          result.wrap(function(){return app.getActiveScene(zone);}, function(success, data) {
-            scenes = app.getScenesForZone(zone);
-            ux.createSceneSelector(scenes, data, selectScene);
+          ux.highlightZone(zone);
+          result.wrap(function(){return app.getActiveScene();}, function(success, data) {
+            if (data == null) {
+              showScenes();
+            } else {
+              showCommands();
+            }
           }, true);
         }, true);
       }

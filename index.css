@@ -23,12 +23,8 @@ li.dropdown-header {
 a.activity {
   margin: 10px;
   min-width: 154px;
-  height: 199px;
+  height: 185px;
   text-align: center;
-}
-
-a.active {
-  border: 5px solid purple;
 }
 
 div.activity-icon {
@@ -36,6 +32,10 @@ div.activity-icon {
   height: 128px;
   line-height: 128px;
   margin: auto;
+}
+
+a.active {
+  border: 5px solid purple;
 }
 
 #blockui {
@@ -48,4 +48,8 @@ div.activity-icon {
   background-color: #000000;
   z-index: 9999;
   display: none;
+}
+
+a.active-zone {
+  border-bottom: 2px solid purple
 }

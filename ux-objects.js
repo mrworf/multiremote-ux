@@ -11,8 +11,10 @@ var UXObjects = function() {
   this.cmdCounter = 0;
   this.counterBlockUI = 0;
   this.nativeClient = (typeof MultiRemoteAPI != 'undefined');
+  this.mapZones = {};
+  this.currentZone = null;
 
-  this.VIBRATE_BTN = 100;
+  this.VIBRATE_BTN = 50;
 
   this.getId = function() {
     return ++this.cmdCounter;
@@ -66,6 +68,7 @@ var UXObjects = function() {
   this.addZone = function(strName, strId, handlerZone) {
     $("#zone-list").append('<li><a href="#" id="zone' + (this.zonecount++) + '">' + strName + '</a></li>');
     $("#zone" + (this.zonecount-1)).bind('click', {zone: strId, subzone: null}, function(event) {handlerZone(event.data.zone, event.data.subzone);});
+    this.mapZones[strId] = "zone" + (this.zonecount-1);
   }
 
   this.addSubZone = function(strName, strId, lstSubZones, handlerZone) {
@@ -86,6 +89,7 @@ var UXObjects = function() {
     element +=  '</ul></li>';
 
     $("#zone-list").append(element);
+    this.mapZones[strId] = "zone" + start;
     $("#zone" + (start++)).bind('click', {zone: strId, subzone: null}, function(event) {handlerZone(event.data.zone, event.data.subzone);});
     for (e in lstSubZones) {
       if (lstSubZones.hasOwnProperty(e)) {
@@ -93,6 +97,25 @@ var UXObjects = function() {
       }
     }
 
+  }
+
+  /**
+   * Takes the ux-hint field and breaks it down into key-value pairs
+   *
+   * @param hint ux-hint string
+   * @return key-value pair
+   *
+   * @note Should be moved into the app instead and done ONCE
+   */
+  this.decodeHinting = function(hint) {
+    console.log(hint);
+    var tmp = hint.split(",");
+    var result = {};
+    for (var t in tmp) {
+      t = tmp[t].split("=");
+      result[t[0]] = t[1];
+    }
+    return result;
   }
 
   /**
@@ -109,7 +132,7 @@ var UXObjects = function() {
     var element = '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; width: 100%;"><h1>Choose activity</h1>';
 
     // By default, all zones have a standby scene
-    element += '<a id="scene' + (count++) + '" class="btn btn-default activity ' + (active == null ? "active" : "") + '" href="#" role="button"><div class="activity-icon"><img src="img/standby.png" /></div><h3>Standby</h3></a>';
+    element += '<a id="scene' + (count++) + '" class="btn btn-default activity ' + (active == null ? "active" : "") + '" href="#" role="button"><div class="activity-icon"><img src="img/standby.png" /></div><div style="margin-top: 15px">Standby</div></a>';
 
     for (var e in scenelst) {
       var icon = "unknown";
@@ -117,12 +140,7 @@ var UXObjects = function() {
       var id = e;
 
       // Decode what we need
-      var tmp = scenelst[e]["ux-hint"].split(",");
-      var hint = {};
-      for (var t in tmp) {
-        t = tmp[t].split("=");
-        hint[t[0]] = t[1];
-      }
+      var hint = this.decodeHinting(scenelst[e]["ux-hint"]);
 
       if (hint["icon"] != null) {
         icon = hint["icon"];
@@ -131,13 +149,13 @@ var UXObjects = function() {
       element += '<a id="scene' + (count++) + '" class="btn btn-default activity ' + (active == id ? "active" : "") + '" href="#" role="button"><div class="activity-icon">';
       element += '<img src="img/' + icon + '.png" />';
       element += '</div>';
-      element += '<h3>' + name + '</h3>';
+      element += '<div style="margin-top: 15px">' + name + '</div>';
       element += '</a>';
     }
 
     element += "</div>"
 
-    $('#canvas').html(element);
+    $('#canvas').append(element);
 
     // Assign a button handler for all our scenes
     count = 0;
@@ -150,7 +168,13 @@ var UXObjects = function() {
   this.vibrate = function(millisec) {
     if (!this.nativeClient) return;
 
-    MultiRemoteAPI.vibrate(100);
+    MultiRemoteAPI.vibrate(millisec);
+  }
+
+  this.launchPackage = function(packagename) {
+    if (!this.nativeClient) return;
+
+    MultiRemoteAPI.launchPackage(packagename, true);
   }
 
   this.containsType = function(lstCommands, type) {
@@ -162,36 +186,48 @@ var UXObjects = function() {
     return null;
   }
 
+  this.highlightZone = function(zone) {
+    if (this.currentZone != null) {
+      $("#" + this.currentZone).removeClass("active-zone");
+      this.currentZone = null;
+    }
+
+    if (this.mapZones.hasOwnProperty(zone)) {
+     this.currentZone = this.mapZones[zone];
+     $("#" + this.currentZone).addClass("active-zone");
+    }
+  }
+
   this.clearCanvas = function() {
     $('#canvas').html("");
   }
 
-  this.hasPlaybackControls = function(lstCommands) {
-    // These types are supported
-    var supported = [
-      MRTypes.PLAYBACK_PLAY,
-      MRTypes.PLAYBACK_PAUSE,
-      MRTypes.PLAYBACK_STOP,
-      MRTypes.PLAYBACK_NEXT,
-      MRTypes.PLAYBACK_PREVIOUS,
-      MRTypes.PLAYBACK_CNEXT,
-      MRTypes.PLAYBACK_CPREVIOUS,
-      MRTypes.PLAYBACK_FASTFORWARD,
-      MRTypes.PLAYBACK_REWIND,
-      MRTypes.PLAYBACK_EJECT,
-    ];
-
-    for(var c in lstCommands) {
-      if (supported.indexOf(lstCommands[c]["type"]))
-        return true;
+  this.createControls = function(lstCommands, handler, html, mapping) {
+    // First, see if this should be used at-all (maybe not mappable)
+    var found = false;
+    for(var m in mapping) {
+      if (this.containsType(lstCommands, mapping[m]) != null) {
+        found = true;
+        break;
+      }
     }
-    return false;
+    if (!found)
+      return;
+
+    $('#canvas').append(html);
+
+    // Time to map the commands...
+    for(var m in mapping) {
+      var c = this.containsType(lstCommands, mapping[m]);
+      if (c != null) {
+        $('#' + m).bind('click', {command: c}, function(event){handler(event.data.command);});
+      } else {
+        $('#' + m).hide();
+      }
+    }
   }
 
   this.createPlaybackControls = function(lstCommands, handler) {
-    if (!this.hasPlaybackControls(lstCommands))
-      return;
-
     var mapping = {
       pbplay:      MRTypes.PLAYBACK_PLAY,
       pbpause:     MRTypes.PLAYBACK_PAUSE,
@@ -227,46 +263,10 @@ var UXObjects = function() {
     element += '  </div>';
     element += '</div>';
 
-    $('#canvas').append(element);
-
-    // Time to map the commands...
-    for(var m in mapping) {
-      var c = this.containsType(lstCommands, mapping[m]);
-      if (c != null) {
-        $('#' + m).bind('click', {command: c}, function(event){handler(event.data.command);});
-      } else {
-        $('#' + m).hide();
-      }
-    }
-  }
-
-  this.hasNavigationControls = function(lstCommands) {
-    // These types are supported
-    var supported = [
-      MRTypes.NAVIGATE_UP,
-      MRTypes.NAVIGATE_DOWN,
-      MRTypes.NAVIGATE_LEFT,
-      MRTypes.NAVIGATE_RIGHT,
-      MRTypes.NAVIGATE_ENTER,
-      MRTypes.NAVIGATE_BACK,
-      MRTypes.NAVIGATE_HOME,
-      MRTypes.NAVIGATE_MENU,
-      MRTypes.NAVIGATE_TOPMENU,
-      MRTypes.NAVIGATE_PAGEUP,
-      MRTypes.NAVIGATE_PAGEDOWN,
-    ];
-
-    for(var c in lstCommands) {
-      if (supported.indexOf(lstCommands[c]["type"]))
-        return true;
-    }
-    return false;
+    this.createControls(lstCommands, handler, element, mapping);
   }
 
   this.createNavigationControls = function(lstCommands, handler) {
-    if (!this.hasNavigationControls(lstCommands))
-      return;
-
     var mapping = {
       navup: MRTypes.NAVIGATE_UP,
       navdown: MRTypes.NAVIGATE_DOWN,
@@ -331,72 +331,71 @@ var UXObjects = function() {
     element += '  </table>';
     element += '</div>';
 
+    this.createControls(lstCommands, handler, element, mapping);
+  }
+
+  this.createVolumeControls = function(lstCommands, handler) {
+    var mapping = {
+      volup: MRTypes.VOLUME_UP,
+      voldown: MRTypes.VOLUME_DOWN,
+      volmute: MRTypes.VOLUME_MUTE,
+    };
+
+    var element = "";
+    element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
+    element += '  <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">';
+    element += '    <button id="volup" type="button" style="height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span></button>';
+    element += '    <button id="voldown" type="button" style="height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span></button>';
+    element += '    <button id="volmute" type="button" class="btn btn-default"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span></button>';
+    element += '  </div>';
+    element += '</div>';
+
+    this.createControls(lstCommands, handler, element, mapping);
+  }
+
+  this.renderSceneInfo = function(sceneInfo, handleStandby, handleScene) {
+    var element = "";
+
+    element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px; width: 100%">';
+    element += '  <button id="shortcut-standby" type="button" style="float:left" class="btn btn-default"><span class="glyphicon glyphicon-off"></span> Standby</button>';
+    element += '<div style="display:inline-block">' + sceneInfo.name + "<br><small>" + sceneInfo.description + "</small></div>";
+    element += '  <button id="shortcut-scenes" type="button" style="float:right" class="btn btn-default">Change</button>';
+    element += '</div>';
+
     $('#canvas').append(element);
 
-    // Time to map the commands...
-    for(var m in mapping) {
-      var c = this.containsType(lstCommands, mapping[m]);
-      if (c != null) {
-        $('#' + m).bind('click', {command: c}, function(event){handler(event.data.command);});
-      } else {
-        $('#' + m).hide();
-      }
+    $('#shortcut-scenes').click(handleScene);
+    $('#shortcut-standby').click(handleStandby);
+  }
+
+  this.createApplicationLink = function(sceneInfo, handler) {
+    var hint = this.decodeHinting(sceneInfo["ux-hint"]);
+    if (!hint.hasOwnProperty("android-app")) {
+      return;
     }
+
+    var element = "";
+    if (this.nativeClient) {
+      element += '<div class="alert alert-info" style="text-align: center; display: inline-block; margin: 5px">';
+      element += '  <h3>This activity is controlled from a separate screen.</h3>';
+      element += '  <br/>';
+      element += '  <button id="appbtn" type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> Take me there</button>';
+      element += '</div>';
+      $('#canvas').append(element);
+
+      $('#appbtn').bind('click', {app: hint["android-app"]}, function(event){handler(event.data.app);});
+    } else {
+      element += '<div class="alert alert-warning" style="text-align: center; display: inline-block; float: left; margin: 5px">';
+      element += '  <h3>This activity uses a separate application to control playback</h3>';
+      element += '</div>';
+      $('#canvas').append(element);
+    }
+
   }
 }
 
 
 /*
-      <!-- Navigation Control -->
-      <div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <table style="float: left">
-          <tr>
-            <td rowspan="3" style="border-right: 1px solid #b2b2b2; padding: 3px; padding-right: 10px">
-              <button type="button" style="float: left; height: 4em; margin-bottom: 3px;" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>
-              <br>
-              <button type="button" style="float: left; height: 4em; margin-top: 3px;" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>
-            </td>
-            <td style="padding: 3px; padding-left: 10px">
-            </td>
-            <td style="padding: 3px; vertical-align: bottom">
-                <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></button>
-            </td>
-            <td style="padding: 3px; padding-right: 10px">
-            </td>
-            <td rowspan="3" style="border-left: 1px solid #b2b2b2; padding-left: 10px">
-              <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">
-                <button type="button" class="btn btn-default">Home</button>
-                <button type="button" class="btn btn-default">Top menu</button>
-                <button type="button" class="btn btn-default">Menu</button>
-                <button type="button" class="btn btn-default">Back</button>
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding: 3px; padding-left: 10px">
-              <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button>
-            </td>
-            <td style="padding: 3px">
-              <button type="button" class="btn btn-default btn-lg">OK</button>
-            </td>
-            <td style="padding: 3px; padding-right: 10px">
-              <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding: 3px; padding-left: 10px">
-            </td>
-            <td style="padding: 3px; vertical-align: top">
-              <button type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></button>
-            </td>
-            <td style="padding: 3px; padding-right: 10px">
-            </td>
-          </tr>
-        </table>
-      </div>
-      <br clear="all">
       <!-- Audio/Video settings -->
       <div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">
         <div class="btn-group btn-group-lg" role="group" aria-label="...">
@@ -412,15 +411,6 @@ var UXObjects = function() {
         <div class="btn-group btn-group-lg" role="group" aria-label="...">
           <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Shuffle</button>
           <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-retweet" aria-hidden="true"></span> Repeat</button>
-        </div>
-      </div>
-
-      <!-- Volume controls -->
-      <div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">
-          <button type="button" style="height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span></button>
-          <button type="button" style="height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span></button>
-          <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span></button>
         </div>
       </div>
 
@@ -442,7 +432,4 @@ var UXObjects = function() {
       </div>
 
       <!-- No options redirect -->
-      <div class="alert alert-warning" style="text-align: center; display: inline-block; float: left; margin: 5px">
-        <h3>This activity has no controls</h3>
-      </div>
 */
