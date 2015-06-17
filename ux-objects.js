@@ -71,18 +71,20 @@ var UXObjects = function() {
     this.mapZones[strId] = "zone" + (this.zonecount-1);
   }
 
-  this.addSubZone = function(strName, strId, lstSubZones, handlerZone) {
+  this.addSubZone = function(strName, strId, lstSubZones, strActiveSub, handlerZone) {
     var start = this.zonecount;
 
     var element = '<li class="dropdown">';
     element += '<a href="#" style="display: inline-block; padding-right: 0px" id="zone' + (this.zonecount++) + '">' + strName + '</a>';
     element += '<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" style="display: inline-block"><span class="caret"></span></a>';
     element += '<ul class="dropdown-menu" role="menu">';
-    element += '<li class="dropdown-header">Pick activity</li>';
+    element += '<li class="dropdown-header">Configuration</li>';
 
     for (e in lstSubZones) {
       if (lstSubZones.hasOwnProperty(e)) {
-        element += '<li><a href="#"  id="zone' + (this.zonecount++) + '">' + lstSubZones[e] + '</a></li>'
+        console.log("Active sub: " + strActiveSub);
+        console.log("Current sub: " + e);
+        element += '<li><a href="#"  id="zone' + (this.zonecount++) + '"><span class="glyphicon glyphicon-ok' + (strActiveSub == e ? "" : " hidden") + '"" aria-hidden="true"></span> ' + lstSubZones[e] + '</a></li>'
       }
     }
 
@@ -415,6 +417,34 @@ var UXObjects = function() {
     var element = '<div style="position: absolute; z-order: -9999; bottom: 0px; right: 0px; width: 136px; height: 136px; background-image: url(img/' + hint.icon + '.png);  background-repeat: no-repeat; opacity: 0.3"></div>';
     $('#canvas').append(element);
   }
+
+  this.showConfiguration = function(zones, handler, showError) {
+    element = '<option value="">Select one</option>';
+    for (var z in zones) {
+      element += '<option value="' + z + '">' + zones[z] + '</option>'
+    }
+    $('#config-zone').html(element);
+
+    $('#config-add').unbind();
+    $('#config-add').bind('click', null, function(event) {
+      var name = $('#config-name').val().trim();
+      var desc = $('#config-desc').val().trim();
+      var zone = $('#config-zone').val().trim();
+      var pin  = $('#config-pin').val().trim();
+      if (name.length == 0 || desc.length == 0 || zone.length == 0 || pin.length == 0)
+        alert('None of the fields may be empty');
+      else {
+        $('#configDialog').modal('hide');
+        handler(pin, name, desc, zone);
+      }
+    });
+
+    $("#configDialog").modal();
+    if (showError) {
+      alert("Failed to add remote");
+    }
+  }
+
 }
 
 

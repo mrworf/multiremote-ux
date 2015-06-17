@@ -10,7 +10,6 @@
  */
 MultiRemoteClient = function(serverAddress, funcResults) {
   this.cfgAddress = "http://" + serverAddress + ":5000";
-  this.cfgRemoteId = "livingroom"; // Should not be hardcoded
   this.cfgResultFunc = funcResults;
   this.cmdCounter = 0;
 
@@ -20,21 +19,36 @@ MultiRemoteClient = function(serverAddress, funcResults) {
   this.currentZone = null;
   this.currentScene = null;
 
+  this.remoteId = null;
+  this.remoteDetails = null;
+
   /**
    * Initializes the class, making it possible to interact with
    * the server.
-   *
    */
   this.init = function() {
     // Load the zone and scene list
     self = this;
     id = this.getId();
 
+    this.remoteId = $.jStorage.get("remote-id");
+
     this.execServer("/zone", function(data) {
       self.lstZones = data;
       self.execServer("/scene", function(data) {
         self.lstScenes = data;
-        self.returnResult(id, true, null);
+        if (self.remoteId != null) {
+          self.execServer("/remotes/" + self.remoteId, function(data) {
+            if (data.hasOwnProperty("error")) {
+              self.remoteId = null;
+              $.jStorage.deleteKey("remote-id");
+            }
+            self.remoteDetails = data;
+            console.log(data);
+            self.returnResult(id, true, null);
+          });
+        } else
+          self.returnResult(id, true, null);
       });
     });
 
@@ -51,6 +65,13 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     }
 
     return result;
+  }
+
+  this.getActiveSubZone = function(zone) {
+    if (this.lstZones[zone].hasOwnProperty("subzones")) {
+      return this.lstZones[zone]["subzone"];
+    }
+    return "";
   }
 
   this.getZone = function(zone) {
@@ -94,7 +115,7 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     self = this;
     id = this.getId();
 
-    this.execServer("/attach/" + this.cfgRemoteId + "/" + zone, function(data) {
+    this.execServer("/attach/" + this.remoteId + "/" + zone, function(data) {
       self.currentZone = zone;
       self.returnResult(id, true, null);
     });
@@ -148,7 +169,7 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     self = this;
     id = this.getId();
 
-    this.execServer("/command/" + this.cfgRemoteId, function(data) {
+    this.execServer("/command/" + this.remoteId, function(data) {
       self.returnResult(id, true, data["commands"]);
     });
 
@@ -196,10 +217,55 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     self = this;
     id = this.getId();
 
-    this.execServer("/command/" + this.cfgRemoteId + "/" + type + "/" + command, function(data) {
+    this.execServer("/command/" + this.remoteId + "/" + type + "/" + command, function(data) {
       self.returnResult(id, true, null);
     });
 
     return id;
+  }
+
+  /**
+   * Checks if this remote is registered with the backend. This is actually checked on init()
+   */
+  this.isRegistered = function() {
+    return this.remoteId != null;
+  }
+
+  /**
+   * Registers this remote with the backend and stores the UUID returned.
+   *
+   * Returns true on success, false on failure
+   */
+  this.registerRemote = function(pin, name, desc, zone) {
+    self = this;
+    id = this.getId();
+
+    this.execServer("/register/" + pin + "/" + name + "/" + desc + "/" + zone, function(data) {
+      if (data.hasOwnProperty("error") || !data.hasOwnProperty("uuid")) {
+        self.returnResult(id, false, null);
+      } else {
+        $.jStorage.set("remote-id", data["uuid"]);
+        self.remoteId = data["uuid"];
+
+        // Reload info from server (to keep us consistent with init)
+        self.execServer("/remotes/" + self.remoteId, function(data) {
+          if (data.hasOwnProperty("error")) {
+            self.remoteId = null;
+            $.jStorage.deleteKey("remote-id");
+          }
+          self.remoteDetails = data;
+          console.log(data);
+          self.returnResult(id, true, null);
+        });
+      }
+    });
+    return id;
+  }
+
+  this.getDefaultZone = function() {
+    if (!this.isRegistered())
+      return null;
+
+    return this.remoteDetails["zone"];
   }
 }

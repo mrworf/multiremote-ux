@@ -53,3 +53,7 @@ a.active {
 a.active-zone {
   border-bottom: 2px solid purple
 }
+
+span.hidden {
+  visibility: hidden;
+}

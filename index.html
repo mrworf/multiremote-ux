@@ -55,11 +55,37 @@
       </div>
     </div>
 
+    <div style="width: 50%; overflow-x: hidden; overflow-y: auto; max-height: 80%; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal fade" id="configDialog" data-backdrop="static" data-keyboard="false">
+      <div class="modal-body">
+        Please configure this remote
+        <hr>
+        <div class="input-group" style="width: 100%">
+          <label for="config-name">Name</label>
+          <input id="config-name" type="text" class="form-control" placeholder="Short and nice" aria-describedby="basic-addon1">
+        </div>
+        <div class="input-group" style="width: 100%">
+          <label for="config-desc">Description</label>
+          <input id="config-desc" type="text" class="form-control" placeholder="For example: location, device, owner" aria-describedby="basic-addon1">
+        </div>
+        <div class="input-group" style="width: 100%">
+          <label for="config-zone">Default location</label>
+          <select id="config-zone" class="form-control" aria-describedby="basic-addon1"></select>
+        </div>
+        <div class="input-group" style="width: 100%">
+          <label for="config-pin">System PIN</label>
+          <input id="config-pin" type="password" class="form-control" placeholder="Provided by the installer" aria-describedby="basic-addon1">
+        </div>
+        <button id="config-add" type="button" style="margin-top: 10px; width: 100%" class="btn btn-primary btn-lg">Add remote</button>
+      </div>
+    </div>
+
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="dependencies/jquery2.min.js"></script>
     <script src="dependencies/bootstrap/js/bootstrap.min.js"></script>
+    <script src="dependencies/json2.js"></script>
+    <script src="dependencies/jstorage.js"></script>
     <script src="multiremoteclient.js"></script>
     <script src="multiremotetypes.js"></script>
     <script src="buttonrepeater.js"></script>
@@ -92,7 +118,7 @@
       }
 
       function conflictHandler(scene, choice) {
-        // In mose cases, you can just send the choice back...
+        // In most cases, you can just send the choice back...
         ux.vibrate(ux.VIBRATE_BTN);
 
         if (choice == "clone") {
@@ -102,6 +128,19 @@
         } else {
 
         }
+      }
+
+      function configHandler(pin, name, desc, zone) {
+        ux.vibrate(ux.VIBRATE_BTN);
+
+        result.wrap(function() {return app.registerRemote(pin, name, desc, zone);}, function(success, data) {
+          if (!success) {
+            ux.showConfiguration(app.getZones(), configHandler, true);
+          } else {
+            // Woohoo! Load default zone
+            selectZone(app.getDefaultZone());
+          }
+        });
       }
 
       function selectScene(scene, override) {
@@ -184,10 +223,17 @@
         for (var e in z) {
           if (z.hasOwnProperty(e)) {
             if (app.hasSubZones(e))
-              ux.addSubZone(z[e], e, app.getSubZones(e), selectZone);
+              ux.addSubZone(z[e], e, app.getSubZones(e), app.getActiveSubZone(e), selectZone);
             else
               ux.addZone(z[e], e, selectZone);
           }
+        }
+
+        // Do we have a remote?
+        if (!app.isRegistered()) {
+          ux.showConfiguration(app.getZones(), configHandler, false);
+        } else {
+          selectZone(app.getDefaultZone());
         }
       }, true);
     </script>
