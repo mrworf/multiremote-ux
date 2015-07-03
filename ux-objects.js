@@ -13,6 +13,7 @@ var UXObjects = function() {
   this.nativeClient = (typeof MultiRemoteAPI != 'undefined');
   this.mapZones = {};
   this.currentZone = null;
+  this.repeater = new ButtonRepeater(500, 250);
 
   this.VIBRATE_BTN = 50;
 
@@ -126,14 +127,31 @@ var UXObjects = function() {
    * @param scenelst The list of scenes
    * @param active The active scene or null
    * @param handleSelection The function to be called when user selects a scene
+   * @param szList If set, provides a list of sub-zones available
+   * @param szActive If set, indicates currently active subzone
+   * @param handleSubzone The function to be called when user switches subzone
    */
-  this.createSceneSelector = function(scenelst, active, handleSelection) {
+  this.createSceneSelector = function(scenelst, active, handleSelection, szList, szActive, handleSubzone) {
     var count = 0;
 
-    var element = '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; width: 100%;"><h1>Choose activity</h1>';
+    var element = "";
+
+    element += '<div style="text-align: center; display: inline-block; float: left; width: 100%;">'; // <h1 style="margin-top: 0px">Choose activity</h1>';
+    if (szList != undefined) {
+      element += '<div class="btn-group btn-group-lg" role="group" aria-label="...">';
+      var i = 0;
+      for (var sz in szList) {
+        var t = "default";
+        if (sz == szActive)
+          t = "primary";
+        element += '<button id="subzone' + i + '" type="button" style="width: 200px" class="btn btn-' + t + '">' + szList[sz] + '</button>';
+        i++;
+      }
+      element += '</div><br>';
+    }
 
     // By default, all zones have a standby scene
-    element += '<a id="scene' + (count++) + '" class="btn btn-default activity ' + (active == null ? "active" : "") + '" href="#" role="button"><div class="activity-icon"><img src="img/standby.png" /></div><div style="margin-top: 15px">Standby</div></a>';
+    element += '<a id="scene' + (count++) + '" class="btn btn-default activity ' + (active == null ? "active" : "") + '" href="#" role="button"><div class="activity-icon"><img src="/multiremote-ux/img/standby.png" /></div><div style="margin-top: 15px">Standby</div></a>';
 
     for (var e in scenelst) {
       var icon = "unknown";
@@ -163,6 +181,16 @@ var UXObjects = function() {
     $('#scene' + (count++)).bind('click', {scene: null}, function(event) {handleSelection(event.data.scene);});
     for (var e in scenelst) {
       $('#scene' + (count++)).bind('click', {scene: e}, function(event) {handleSelection(event.data.scene);});
+    }
+
+    // If we have subzones, also handle that
+    if (szList != undefined) {
+      var i = 0;
+      for (var sz in szList) {
+        if (sz != szActive)
+          $('#subzone' + (i++)).bind('click', {subzone: sz}, function(event) {handleSubzone(event.data.subzone);});
+        i++;
+      }
     }
   }
 
@@ -203,7 +231,18 @@ var UXObjects = function() {
     $('#canvas').html("");
   }
 
-  this.createControls = function(lstCommands, handler, html, mapping) {
+  /**
+   * Maps the controls to actual calls. Also allows for repeating buttons.
+   *
+   * NOTE! Repeating buttons will NOT work if blocking UI is used
+   *
+   * @param lstCommands A dictionary of commands, may be less than the controller
+   * @param handler The function which can handle it
+   * @param html The HTML layout holding the controls
+   * @param mapping How to map MRTypes to HTML5 id
+   * @param repeat Array of HTML5 id which shall repeat (DO NOT USE BLOCKING UI)
+   */
+  this.createControls = function(lstCommands, handler, html, mapping, repeat) {
     // First, see if this should be used at-all (maybe not mappable)
     var found = false;
     for(var m in mapping) {
@@ -219,9 +258,21 @@ var UXObjects = function() {
 
     // Time to map the commands...
     for(var m in mapping) {
+      $('#' + m).unbind()
       var c = this.containsType(lstCommands, mapping[m]);
       if (c != null) {
-        $('#' + m).bind('click', {command: c}, function(event){handler(event.data.command);});
+        if (repeat != undefined && repeat.indexOf(m) != -1) {
+          var copy = this.repeater;
+          var btn = m;
+          console.log("Binding " + btn);
+          $("#" + btn).bind('mouseout',  {btn: m, command: c, rep: copy}, function(event) {event.data.rep.stop(event.data.btn); });
+          $("#" + btn).bind('mouseup',   {btn: m, command: c, rep: copy}, function(event) {event.data.rep.stop(event.data.btn); });
+          $("#" + btn).bind('touchend',   {btn: m, command: c, rep: copy}, function(event) {event.data.rep.stop(event.data.btn); });
+          $("#" + btn).bind('touchcancel',   {btn: m, command: c, rep: copy}, function(event) {event.data.rep.stop(event.data.btn); });
+          $("#" + btn).bind('mousedown', {btn: m, command: c, rep: copy}, function(event) {var e = event.data.command; event.data.rep.start(event.data.btn, function(done){handler(e, done);}); });
+        } else {
+          $('#' + m).bind('click', {command: c}, function(event){handler(event.data.command);});
+        }
       } else {
         $('#' + m).hide();
       }
@@ -231,6 +282,7 @@ var UXObjects = function() {
   this.createPlaybackControls = function(lstCommands, handler) {
     var mapping = {
       pbplay:      MRTypes.PLAYBACK_PLAY,
+      pbplaypause: MRTypes.PLAYBACK_PLAYPAUSE,
       pbpause:     MRTypes.PLAYBACK_PAUSE,
       pbstop:      MRTypes.PLAYBACK_STOP,
       pbnskip:     MRTypes.PLAYBACK_NEXT,
@@ -245,18 +297,19 @@ var UXObjects = function() {
     var element = "";
     element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
     element += '  <div class="btn-group btn-group-lg" role="group" aria-label="...">';
-    element += '    <button id="pbpchapter" type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span></button>';
-    element += '    <button id="pbplay" type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>';
-    element += '    <button id="pbpause" type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>';
-    element += '    <button id="pbnchapter" type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span></button>';
+    element += '    <button id="pbpchapter" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span></button>';
+    element += '    <button id="pbplay" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>';
+    element += '    <button id="pbpause" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>';
+    element += '    <button id="pbplaypause" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> / <span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>';
+    element += '    <button id="pbnchapter" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span></button>';
     element += '  </div>';
     element += '  <br/>';
     element += '  <div class="btn-group btn-group-lg" role="group" aria-label="..." style="padding-top: 10px;">';
-    element += '    <button id="pbpskip" type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>';
-    element += '    <button id="pbrew" type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-backward" aria-hidden="true"></span></button>';
-    element += '    <button id="pbstop" type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>';
-    element += '    <button id="pbforw" type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-forward" aria-hidden="true"></span></button>';
-    element += '    <button id="pbnskip" type="button" class="btn btn-default" style="width: 80px"><span class="glyphicon glyphicon-fast-forward" aria-hidden="true"></span></button>';
+    element += '    <button id="pbpskip" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>';
+    element += '    <button id="pbrew" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-backward" aria-hidden="true"></span></button>';
+    element += '    <button id="pbstop" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>';
+    element += '    <button id="pbforw" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-forward" aria-hidden="true"></span></button>';
+    element += '    <button id="pbnskip" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-fast-forward" aria-hidden="true"></span></button>';
     element += '  </div>';
     element += '  <br/>';
     element += '  <div class="btn-group btn-group" role="group" aria-label="..." style="padding-top: 10px; width: 100%; padding-left: 10px; padding-right: 10px">';
@@ -286,7 +339,7 @@ var UXObjects = function() {
     element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
     element += '  <table style="float: left">';
     element += '    <tr>';
-    element += '      <td rowspan="3" style="border-right: 1px solid #b2b2b2; padding: 3px; padding-right: 10px">';
+    element += '      <td rowspan="3" style="border-right: 0px solid #b2b2b2; padding: 3px; padding-right: 10px">';
     element += '        <button id="navpageup" type="button" style="float: left; height: 4em; margin-bottom: 3px;" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>';
     element += '        <br>';
     element += '        <button id="navpagedn" type="button" style="float: left; height: 4em; margin-top: 3px;" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>';
@@ -294,29 +347,29 @@ var UXObjects = function() {
     element += '      <td style="padding: 3px; padding-left: 10px">';
     element += '      </td>';
     element += '      <td style="padding: 3px; vertical-align: bottom">';
-    element += '          <button id="navup" type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></button>';
+    element += '          <button id="navup" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-right: 10px">';
     element += '      </td>';
-    element += '      <td rowspan="3" style="border-left: 1px solid #b2b2b2; padding-left: 10px">';
+    element += '      <td rowspan="3" style="border-left: 0px solid #b2b2b2; padding-left: 10px">';
     element += '        <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">';
-    element += '          <button id="navhome" type="button" class="btn btn-default">Home</button>';
-    element += '          <button id="navtop" type="button" class="btn btn-default">Top menu</button>';
-    element += '          <button id="navmenu" type="button" class="btn btn-default">Menu</button>';
-    element += '          <button id="navback" type="button" class="btn btn-default">Back</button>';
+    element += '          <button id="navhome" type="button"  style="width: 100px; height: 75px" class="btn btn-default">Home</button>';
+    element += '          <button id="navtop" type="button" style="width: 100px; height: 75px" class="btn btn-default">Top menu</button>';
+    element += '          <button id="navmenu" type="button" style="width: 100px; height: 75px" class="btn btn-default">Menu</button>';
+    element += '          <button id="navback" type="button" style="width: 100px; height: 75px" class="btn btn-default">Back</button>';
     element += '        </div>';
     element += '      </td>';
     element += '    </tr>';
 
     element += '    <tr>';
     element += '      <td style="padding: 3px; padding-left: 10px">';
-    element += '        <button id="navleft" type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button>';
+    element += '        <button id="navleft" type="button"  style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px">';
-    element += '        <button id="naventer" type="button" class="btn btn-default btn-lg">OK</button>';
+    element += '        <button id="naventer" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg">OK</button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-right: 10px">';
-    element += '        <button id="navright" type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button>';
+    element += '        <button id="navright" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '    </tr>';
 
@@ -324,7 +377,7 @@ var UXObjects = function() {
     element += '      <td style="padding: 3px; padding-left: 10px">';
     element += '      </td>';
     element += '      <td style="padding: 3px; vertical-align: top">';
-    element += '        <button id="navdown" type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></button>';
+    element += '        <button id="navdown" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-right: 10px">';
     element += '      </td>';
@@ -342,25 +395,27 @@ var UXObjects = function() {
       volmute: MRTypes.VOLUME_MUTE,
     };
 
+    var repeat = ["volup", "voldown"];
+
     var element = "";
     element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
     element += '  <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">';
-    element += '    <button id="volup" type="button" style="height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span></button>';
-    element += '    <button id="voldown" type="button" style="height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span></button>';
-    element += '    <button id="volmute" type="button" class="btn btn-default"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span></button>';
+    element += '    <button id="volup" type="button" style="height: 6em; width: 100px;" class="btn btn-default"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span></button>';
+    element += '    <button id="voldown" type="button" style="height: 6em; width: 100px" class="btn btn-default"><span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span></button>';
+    element += '    <button id="volmute" type="button" style="height: 4em; width: 100px" class="btn btn-default"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span></button>';
     element += '  </div>';
     element += '</div>';
 
-    this.createControls(lstCommands, handler, element, mapping);
+    this.createControls(lstCommands, handler, element, mapping, repeat);
   }
 
   this.renderSceneInfo = function(sceneInfo, handleStandby, handleScene) {
     var element = "";
 
     element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px; width: 100%">';
-    element += '  <button id="shortcut-standby" type="button" style="float:left" class="btn btn-default"><span class="glyphicon glyphicon-off"></span> Standby</button>';
+    element += '  <button id="shortcut-standby" type="button" style="font-size: 12pt; width: 100px; float:left; height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-off"></span><br>Standby</button>';
     element += '<div style="display:inline-block">' + sceneInfo.name + "<br><small>" + sceneInfo.description + "</small></div>";
-    element += '  <button id="shortcut-scenes" type="button" style="float:right" class="btn btn-default">Change</button>';
+    element += '  <button id="shortcut-scenes" type="button" style="font-size: 12pt; width: 100px; float:right; height: 4em" class="btn btn-default">Change<br>Activity</button>';
     element += '</div>';
 
     $('#canvas').append(element);

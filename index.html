@@ -26,7 +26,7 @@
         <ul class="nav navbar-nav" id="zone-list">
         </ul>
         <ul class="nav navbar-nav navbar-right">
-          <li><a href="#"><span class="glyphicon glyphicon-off"></span> All off</a></li>
+          <li><a href="#"><span class="glyphicon glyphicon-cog"></span></a></li>
         </ul>
       </div>
     </nav>
@@ -98,18 +98,30 @@
 
       ux.optimize();
 
-      function sceneHandler(command) {
+      function sceneHandler(command, done) {
         ux.vibrate(ux.VIBRATE_BTN);
 
         result.wrap(function(){return app.issueCommand("scene", command);}, function(success, data) {
+          if (done != undefined)
+            done();
         }, true);
       }
 
-      function zoneHandler(command) {
+      function zoneHandler(command, done) {
         ux.vibrate(ux.VIBRATE_BTN);
 
+        var blockUI = true;
+
+        // Blocking some of these is bad since repeat won't function properly (button loses focus)
+        if (done != undefined)
+        {
+          blockUI = false;
+        }
+
         result.wrap(function(){return app.issueCommand("zone", command);}, function(success, data) {
-        }, true);
+          if (done != undefined)
+            done();
+        }, blockUI);
       }
 
       function appHandler(packagename) {
@@ -186,7 +198,7 @@
         result.wrap(function(){return app.getCommands();}, function(success, data) {
           // Lets see what we got
           ux.clearCanvas();
-          ux.renderSceneInfo(app.getScene(app.getCachedScene()), gotoStandby, showScenes);
+          ux.renderSceneInfo(app.getScene(app.getCachedScene()), gotoStandby, function() {ux.vibrate(ux.VIBRATE_BTN); showScenes();});
           ux.createVolumeControls(data.zone, zoneHandler);
           ux.createPlaybackControls(data.scene, sceneHandler);
           ux.createNavigationControls(data.scene, sceneHandler);
@@ -195,10 +207,28 @@
         }, true);
       }
 
+      function selectSubzone(subzone) {
+        ux.vibrate(ux.VIBRATE_BTN);
+        console.log("subzone: " + subzone);
+        result.wrap(function(){return app.selectSubZone(subzone);}, function(success, data) {
+          result.wrap(function(){return app.getActiveScene();}, function(success, data) {
+            if (data == null) {
+              showScenes();
+            } else {
+              showCommands();
+            }
+          }, true);
+        }, true);
+      }
+
       function showScenes() {
         scenes = app.getScenesForZone(app.getCachedZone());
         ux.clearCanvas();
-        ux.createSceneSelector(scenes, app.getCachedScene(), selectScene);
+        var z = app.getCachedZone();
+        if (app.hasSubZones(z))
+          ux.createSceneSelector(scenes, app.getCachedScene(), selectScene, app.getSubZones(z), app.getActiveSubZone(), selectSubzone);
+        else
+          ux.createSceneSelector(scenes, app.getCachedScene(), selectScene);
       }
 
       function selectZone(zone, subzone) {
@@ -222,10 +252,7 @@
         z = app.getZones();
         for (var e in z) {
           if (z.hasOwnProperty(e)) {
-            if (app.hasSubZones(e))
-              ux.addSubZone(z[e], e, app.getSubZones(e), app.getActiveSubZone(e), selectZone);
-            else
-              ux.addZone(z[e], e, selectZone);
+            ux.addZone(z[e], e, selectZone);
           }
         }
 

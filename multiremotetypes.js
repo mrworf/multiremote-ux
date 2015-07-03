@@ -31,6 +31,8 @@ var MultiRemoteTypes = function() {
   this.PLAYBACK_ANGLE          = 119;
   this.PLAYBACK_EJECT          = 120;
 
+  this.PLAYBACK_PLAYPAUSE      = 121;
+
   this.NAVIGATE_UP           = 200;
   this.NAVIGATE_DOWN         = 201;
   this.NAVIGATE_LEFT         = 202;

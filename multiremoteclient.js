@@ -18,6 +18,7 @@ MultiRemoteClient = function(serverAddress, funcResults) {
 
   this.currentZone = null;
   this.currentScene = null;
+  this.currentSubZone = null;
 
   this.remoteId = null;
   this.remoteDetails = null;
@@ -67,15 +68,16 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     return result;
   }
 
-  this.getActiveSubZone = function(zone) {
-    if (this.lstZones[zone].hasOwnProperty("subzones")) {
-      return this.lstZones[zone]["subzone"];
-    }
-    return "";
+  this.getActiveSubZone = function() {
+    return this.currentSubZone;
   }
 
   this.getZone = function(zone) {
     return this.lstZones[zone];
+  }
+
+  this.getActiveZone = function() {
+    return this.currentZone;
   }
 
   this.hasSubZones = function(zone) {
@@ -111,12 +113,29 @@ MultiRemoteClient = function(serverAddress, funcResults) {
   }
 
   this.selectZone = function(zone) {
-    // Load the zone and scene list
     self = this;
     id = this.getId();
 
     this.execServer("/attach/" + this.remoteId + "/" + zone, function(data) {
       self.currentZone = zone;
+      self.execServer("/subzone/" + zone, function(data) {
+        if (data.hasOwnProperty("active-subzone"))
+          self.currentSubZone = data["active-subzone"];
+        else
+          self.currentSubZone = null;
+        self.returnResult(id, true, null);
+      });
+    });
+
+    return id;
+  }
+
+  this.selectSubZone = function(subzone) {
+    self = this;
+    id = this.getId();
+
+    this.execServer("/subzone/" + this.currentZone + "/" + subzone, function(data) {
+      self.currentSubZone = subzone;
       self.returnResult(id, true, null);
     });
 

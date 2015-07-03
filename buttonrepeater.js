@@ -17,9 +17,8 @@ ButtonRepeater = function(initialDelay, repeatDelay) {
    */
   this.start = function(btn, func) {
     var copy = this;
-    this.stop(btn);
-    func();
-    this.repeatTimer[btn] = {"timer" : setTimeout( function() {copy.issueRepeat(btn);}, copy.initialDelay), "func" : func};
+    copy.stop(btn);
+    func(function(){copy.repeatTimer[btn] = {"timer" : setTimeout( function() {copy.issueRepeat(copy, btn);}, copy.initialDelay), "func" : func};});
   }
 
   /**
@@ -34,12 +33,20 @@ ButtonRepeater = function(initialDelay, repeatDelay) {
     }
   }
 
-  this.issueRepeat = function(btn) {
-    if (btn in this.repeatTimer) {
-      var copy = this;
-      this.repeatTimer[btn].func();
-      this.repeatTimer[btn].timer = setTimeout( function() {copy.issueRepeat(btn);}, copy.repeatDelay);
+  this.issueRepeat = function(copy, btn) {
+    console.log(">Repeat: " + btn);
+    if (btn in copy.repeatTimer) {
+      copy.repeatTimer[btn].func(
+        function(){
+          if (copy.repeatTimer[btn] == undefined)
+            return;
+          copy.repeatTimer[btn].timer = setTimeout(
+            function() {
+              copy.issueRepeat(copy, btn);
+            }, copy.repeatDelay);
+        });
     }
+    console.log("<Repeat: " + btn);
   }
 
   /**

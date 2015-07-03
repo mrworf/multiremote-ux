@@ -19,8 +19,8 @@ var ResultWrapper = function(ux, timeout) {
   this.handler = function(id, success, data) {
     if (id in this.cmdmap) {
       state = this.cmdmap[id];
-      if (state.timeout) {
-        console.log(state);
+      if (state.blocking) {
+        //console.log(state);
         clearTimeout(state.timerid);
         this.ux.showBusyIndicator(false);
         this.ux.blockUI(false);
@@ -38,16 +38,15 @@ var ResultWrapper = function(ux, timeout) {
    *
    * @param funcCommand Must return a multiremoteclient async id
    * @param funcFollowUp The function which should be called when command finishes
-   * @param useTimeout
+   * @param blockUI Wether or not to show the visual indicator when things take too long
    */
-  this.wrap = function(funcCommand, funcFollowUp, useTimeout) {
+  this.wrap = function(funcCommand, funcFollowUp, blockUI) {
     id = funcCommand();
     self2 = this;
-    this.cmdmap[id] = {handler: funcFollowUp, timeout: useTimeout, timerid: 0};
+    this.cmdmap[id] = {handler: funcFollowUp, blocking: blockUI, timerid: 0};
 
-    if (useTimeout) {
+    if (blockUI) {
       this.cmdmap[id].timerid = setTimeout(function(){console.log("Timeout!"); self2.ux.showBusyIndicator(true);}, this.timeout);
-      console.log("Timeout set: " + this.cmdmap[id].timerid);
       this.ux.blockUI(true);
     }
   }
