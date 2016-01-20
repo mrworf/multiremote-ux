@@ -26,6 +26,7 @@
         <ul class="nav navbar-nav" id="zone-list">
         </ul>
         <ul class="nav navbar-nav navbar-right">
+          <li><span id="time" class="navbar-brand"></span></li>
           <li><a href="#"><span class="glyphicon glyphicon-cog"></span></a></li>
         </ul>
       </div>
@@ -36,7 +37,7 @@
 
 
     <!-- Working indicator -->
-    <div style="width: 50%; height: 58px; overflow: hidden; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal fade" id="busyIndicator" data-backdrop="static" data-keyboard="false">
+    <div style="width: 50%; height: 58px; overflow: hidden; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal" id="busyIndicator" data-backdrop="static" data-keyboard="false">
       <div class="modal-body">
         <div class="progress">
           <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="font-size: 18px; width:100%">...Please wait...</div>
@@ -44,7 +45,7 @@
       </div>
     </div>
 
-    <div style="width: 50%; height: 80%; overflow: hidden; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal fade" id="conflictResolution" data-backdrop="static" data-keyboard="false">
+    <div style="width: 50%; height: 80%; overflow: hidden; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal" id="conflictResolution" data-backdrop="static" data-keyboard="false">
       <div class="modal-body">
         <span id="resolve-question">X conflicts with Y, how would you like to resolve this?</span>
         <hr>
@@ -55,7 +56,7 @@
       </div>
     </div>
 
-    <div style="width: 50%; overflow-x: hidden; overflow-y: auto; max-height: 80%; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal fade" id="configDialog" data-backdrop="static" data-keyboard="false">
+    <div style="width: 50%; overflow-x: hidden; overflow-y: auto; max-height: 80%; padding: 2px; margin: auto; background: #ffffff; border: 2px outset" class="modal" id="configDialog" data-backdrop="static" data-keyboard="false">
       <div class="modal-body">
         Please configure this remote
         <hr>
@@ -88,7 +89,7 @@
     <script src="dependencies/jstorage.js"></script>
     <script src="multiremoteclient.js"></script>
     <script src="multiremotetypes.js"></script>
-    <script src="buttonrepeater.js"></script>
+    <script src="buttonrepeater.js"></script> <!-- Repeater messes up WebView UI ? -->
     <script src="resultwrapper.js"></script>
     <script src="ux-objects.js"></script>
     <script type="text/javascript">
@@ -203,7 +204,9 @@
           ux.createPlaybackControls(data.scene, sceneHandler);
           ux.createNavigationControls(data.scene, sceneHandler);
           ux.createApplicationLink(app.getScene(app.getCachedScene()), appHandler);
+          ux.showMessage(app.getScene(app.getCachedScene()), appHandler);
           ux.renderSceneIcon(app.getScene(app.getCachedScene()));
+
         }, true);
       }
 
@@ -246,6 +249,21 @@
           }, true);
         }, true);
       }
+
+      function updateClock() {
+        var t = new Date();
+        $("#time").innerHTML = "Hello";
+        if (t.getHours() > 12)
+          $("#time").innerHTML = (t.getHours() - 12) + ":" + (t.getMinutes() > 9 ? "0" : "") + t.getMinutes() + "pm";
+        else if (t.getHours() == 0)
+          $("#time").innerHTML = "12:" + (t.getMinutes() > 9 ? "0" : "") + t.getMinutes() + "am";
+        else
+          $("#time").innerHTML = t.getHours() + ":" + (t.getMinutes() > 9 ? "0" : "") + t.getMinutes() + "am";
+      }
+
+      // Start clock function
+        $("#time").innerHTML = "Hello";
+      setInterval(updateClock, 900);
 
       // init the client and remove the modal once done
       result.wrap(function(){return app.init();}, function() {

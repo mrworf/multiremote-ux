@@ -10,12 +10,37 @@ var UXObjects = function() {
   this.zonecount = 0;
   this.cmdCounter = 0;
   this.counterBlockUI = 0;
+  this.uiBlocked = false;
   this.nativeClient = (typeof MultiRemoteAPI != 'undefined');
   this.mapZones = {};
   this.currentZone = null;
   this.repeater = new ButtonRepeater(500, 250);
 
   this.VIBRATE_BTN = 50;
+
+  this.busyTransition = false;
+  this.busyVisible = false;
+  this.busyPendingVisible = false;
+
+  this.checkBusyTransition = function(visible) {
+    console.log("checkBusyTransition() visible = " + visible);
+    this.busyVisible = visible;
+    if (this.busyPendingVisible != this.busyVisible) {
+      // Change state again!
+      this.busyTransition = true;
+      $("#busyIndicator").modal( this.busyPendingVisible ? "" : "hide" );
+      console.log("checkBusyTransition() had pending transition to " + this.busyPendingVisible);
+    } else {
+      this.busyTransition = false;
+      console.log("checkBusyTransition() done!");
+    }
+  }
+
+  {
+    var self = this;
+    $('#busyIndicator').on('shown.bs.modal', function() { self.checkBusyTransition(true); });
+    $('#busyIndicator').on('hidden.bs.modal', function() { self.checkBusyTransition(false); });
+  }
 
   this.getId = function() {
     return ++this.cmdCounter;
@@ -41,11 +66,19 @@ var UXObjects = function() {
   }
 
   this.showBusyIndicator = function(visible) {
-    if (visible) {
-      $("#busyIndicator").modal();
-    } else {
-      $("#busyIndicator").modal("hide");
-    }
+    if (visible == this.busyPendingVisible)
+      return;
+    this.busyPendingVisible = visible;
+    if (!this.busyTransition) {
+      console.log("showBusyIndicator() issue transition");
+      this.busyTransition = true;
+      if (visible) {
+        $("#busyIndicator").modal();
+      } else {
+        $("#busyIndicator").modal("hide");
+      }
+    } else
+      console.log("showBusyIndicator() was transitioning");
   }
 
   this.blockUI = function(block) {
@@ -60,9 +93,15 @@ var UXObjects = function() {
     }
 
     if (this.counterBlockUI > 0) {
-      $("#blockui").show();
-    } else {
+      if (!this.uiBlocked) {
+        this.uiBlocked = true;
+        $("#blockui").show();
+        console.log("Blocked");
+      }
+    } else if (this.uiBlocked) {
+        this.uiBlocked = false;
       $("#blockui").hide();
+      console.log("Unblocked");
     }
   }
 
@@ -108,7 +147,9 @@ var UXObjects = function() {
    * @param hint ux-hint string
    * @return key-value pair
    *
-   * @note Should be moved into the app instead and done ONCE
+   * @note Should be moved into the app instead and done ONCE.
+   * @todo Not very clever, doesn't deal with quotes and commas
+   *       inside the value.
    */
   this.decodeHinting = function(hint) {
     var tmp = hint.split(",");
@@ -285,8 +326,8 @@ var UXObjects = function() {
       pbplaypause: MRTypes.PLAYBACK_PLAYPAUSE,
       pbpause:     MRTypes.PLAYBACK_PAUSE,
       pbstop:      MRTypes.PLAYBACK_STOP,
-      pbnskip:     MRTypes.PLAYBACK_NEXT,
-      pbpskip:     MRTypes.PLAYBACK_PREVIOUS,
+      pbnskip:     MRTypes.PLAYBACK_SKIP_FORWARD,
+      pbpskip:     MRTypes.PLAYBACK_SKIP_BACKWARD,
       pbnchapter:  MRTypes.PLAYBACK_CNEXT,
       pbpchapter:  MRTypes.PLAYBACK_CPREVIOUS,
       pbforw:      MRTypes.PLAYBACK_FASTFORWARD,
@@ -298,16 +339,19 @@ var UXObjects = function() {
     element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
     element += '  <div class="btn-group btn-group-lg" role="group" aria-label="...">';
     element += '    <button id="pbpchapter" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span></button>';
+    element += '    <button id="pbnchapter" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span></button>';
+    element += '  </div>';
+    element += '  <br/>';
+    element += '  <div class="btn-group btn-group-lg" role="group" aria-label="..." style="padding-top: 10px;">';
     element += '    <button id="pbplay" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>';
     element += '    <button id="pbpause" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>';
     element += '    <button id="pbplaypause" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> / <span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>';
-    element += '    <button id="pbnchapter" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span></button>';
+    element += '    <button id="pbstop" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>';
     element += '  </div>';
     element += '  <br/>';
     element += '  <div class="btn-group btn-group-lg" role="group" aria-label="..." style="padding-top: 10px;">';
     element += '    <button id="pbpskip" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>';
     element += '    <button id="pbrew" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-backward" aria-hidden="true"></span></button>';
-    element += '    <button id="pbstop" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>';
     element += '    <button id="pbforw" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-forward" aria-hidden="true"></span></button>';
     element += '    <button id="pbnskip" type="button" class="btn btn-default" style="width: 100px"><span class="glyphicon glyphicon-fast-forward" aria-hidden="true"></span></button>';
     element += '  </div>';
@@ -345,19 +389,13 @@ var UXObjects = function() {
     element += '        <button id="navpagedn" type="button" style="float: left; height: 4em; margin-top: 3px;" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-left: 10px">';
+    element += '          <button id="navhome" type="button"  style="width: 100px; height: 75px" class="btn btn-info">Home</button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; vertical-align: bottom">';
     element += '          <button id="navup" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-right: 10px">';
-    element += '      </td>';
-    element += '      <td rowspan="3" style="border-left: 0px solid #b2b2b2; padding-left: 10px">';
-    element += '        <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">';
-    element += '          <button id="navhome" type="button"  style="width: 100px; height: 75px" class="btn btn-default">Home</button>';
-    element += '          <button id="navtop" type="button" style="width: 100px; height: 75px" class="btn btn-default">Top menu</button>';
-    element += '          <button id="navmenu" type="button" style="width: 100px; height: 75px" class="btn btn-default">Menu</button>';
-    element += '          <button id="navback" type="button" style="width: 100px; height: 75px" class="btn btn-default">Back</button>';
-    element += '        </div>';
+    element += '          <button id="navtop" type="button" style="width: 100px; height: 75px" class="btn btn-info">Top menu</button>';
     element += '      </td>';
     element += '    </tr>';
 
@@ -375,11 +413,13 @@ var UXObjects = function() {
 
     element += '    <tr>';
     element += '      <td style="padding: 3px; padding-left: 10px">';
+    element += '          <button id="navback" type="button" style="width: 100px; height: 75px" class="btn btn-info">Back</button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; vertical-align: top">';
     element += '        <button id="navdown" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-right: 10px">';
+    element += '          <button id="navmenu" type="button" style="width: 100px; height: 75px" class="btn btn-info">Menu</button>';
     element += '      </td>';
     element += '    </tr>';
     element += '  </table>';
@@ -446,6 +486,19 @@ var UXObjects = function() {
       element += '</div>';
       $('#canvas').append(element);
     }
+  }
+
+  this.showMessage = function(sceneInfo, handler) {
+    var hint = this.decodeHinting(sceneInfo["ux-hint"]);
+    if (!hint.hasOwnProperty("message")) {
+      return;
+    }
+
+    var element = "";
+    element += '<div class="alert alert-info" style="text-align: center; display: inline-block; margin: 5px">';
+    element += '  <h3>' + hint["message"] + '</h3>';
+    element += '</div>';
+    $('#canvas').append(element);
   }
 
   this.showConflict = function(scene, question, nbrConflicts, handler) {

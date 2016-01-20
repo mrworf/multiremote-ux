@@ -176,7 +176,13 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     } else {
       this.execServer("/unassign/" + this.currentZone, function(data) {
         self.currentScene = null;
-        self.returnResult(id, true, null);
+        self.execServer("/subzone/" + self.currentZone, function(data) {
+          if (data.hasOwnProperty("active-subzone"))
+            self.currentSubZone = data["active-subzone"];
+          else
+            self.currentSubZone = null;
+          self.returnResult(id, true, null);
+        });
       });
     }
 
