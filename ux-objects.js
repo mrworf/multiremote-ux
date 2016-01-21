@@ -23,16 +23,13 @@ var UXObjects = function() {
   this.busyPendingVisible = false;
 
   this.checkBusyTransition = function(visible) {
-    console.log("checkBusyTransition() visible = " + visible);
     this.busyVisible = visible;
     if (this.busyPendingVisible != this.busyVisible) {
       // Change state again!
       this.busyTransition = true;
       $("#busyIndicator").modal( this.busyPendingVisible ? "" : "hide" );
-      console.log("checkBusyTransition() had pending transition to " + this.busyPendingVisible);
     } else {
       this.busyTransition = false;
-      console.log("checkBusyTransition() done!");
     }
   }
 
@@ -70,7 +67,6 @@ var UXObjects = function() {
       return;
     this.busyPendingVisible = visible;
     if (!this.busyTransition) {
-      console.log("showBusyIndicator() issue transition");
       this.busyTransition = true;
       if (visible) {
         $("#busyIndicator").modal();
@@ -96,12 +92,10 @@ var UXObjects = function() {
       if (!this.uiBlocked) {
         this.uiBlocked = true;
         $("#blockui").show();
-        console.log("Blocked");
       }
     } else if (this.uiBlocked) {
         this.uiBlocked = false;
       $("#blockui").hide();
-      console.log("Unblocked");
     }
   }
 
@@ -305,7 +299,6 @@ var UXObjects = function() {
         if (repeat != undefined && repeat.indexOf(m) != -1) {
           var copy = this.repeater;
           var btn = m;
-          console.log("Binding " + btn);
           $("#" + btn).bind('mouseout',  {btn: m, command: c, rep: copy}, function(event) {event.data.rep.stop(event.data.btn); });
           $("#" + btn).bind('mouseup',   {btn: m, command: c, rep: copy}, function(event) {event.data.rep.stop(event.data.btn); });
           $("#" + btn).bind('touchend',   {btn: m, command: c, rep: copy}, function(event) {event.data.rep.stop(event.data.btn); });

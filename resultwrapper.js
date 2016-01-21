@@ -23,13 +23,9 @@ var ResultWrapper = function(ux, timeout) {
       state = this.cmdmap[id];
       delete this.cmdmap[id];
 
-      console.log("Found " + id + " for unlock");
-      console.log("After, Blockcount = " + this.blockcount);
-
       if (state.blocking) {
         //console.log(state);
         if (--this.blockcount == 0) {
-          console.log("Releasing block " + id);
           clearTimeout(this.blocktimer);
           this.ux.showBusyIndicator(false);
           this.ux.blockUI(false);
@@ -53,7 +49,6 @@ var ResultWrapper = function(ux, timeout) {
    */
   this.wrap = function(funcCommand, funcFollowUp, blockUI) {
     id = funcCommand();
-    console.log("Creating " + id + " for result");
     self2 = this;
     this.cmdmap[id] = {handler: funcFollowUp, blocking: blockUI, timerid: 0};
     if (blockUI) {
@@ -61,7 +56,6 @@ var ResultWrapper = function(ux, timeout) {
       if (this.blockcount++ == 0) {
         this.blocktimer = setTimeout(function(){console.log("Timeout: " + id); if (id in self2.cmdmap) self2.ux.showBusyIndicator(true);}, this.timeout);
       }
-      console.log("Before, Blockcount = " + this.blockcount);
     }
   }
 }
