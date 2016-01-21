@@ -9,6 +9,7 @@
  *       first place.
  */
 MultiRemoteClient = function(serverAddress, funcResults) {
+  this.cfgServerAddress = serverAddress;
   this.cfgAddress = "http://" + serverAddress + ":5000";
   this.cfgResultFunc = funcResults;
   this.cmdCounter = 0;
@@ -22,6 +23,10 @@ MultiRemoteClient = function(serverAddress, funcResults) {
 
   this.remoteId = null;
   this.remoteDetails = null;
+
+  this.eventService = null;
+
+  this.cbSceneListener = null;
 
   /**
    * Initializes the class, making it possible to interact with
@@ -45,11 +50,14 @@ MultiRemoteClient = function(serverAddress, funcResults) {
               $.jStorage.deleteKey("remote-id");
             }
             self.remoteDetails = data;
-            console.log(data);
+            self.eventService = new MultiRemoteEventService(self.cfgServerAddress, self.remoteId, function(type, source, data) {self.onEvent(type, source, data);});
+            self.eventService.connect();
             self.returnResult(id, true, null);
           });
-        } else
+        } else {
+          // Alright, time to init the event service
           self.returnResult(id, true, null);
+        }
       });
     });
 
@@ -165,7 +173,7 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     id = this.getId();
 
     if (scene != null) {
-      this.execServer("/assign/" + this.currentZone + "/" + scene + optOverride, function(data) {
+      this.execServer("/assign/" + this.currentZone + "/" + this.remoteId + "/" + scene + optOverride, function(data) {
         if (data.hasOwnProperty("conflict")) {
           self.returnResult(id, false, data);
         } else {
@@ -174,7 +182,7 @@ MultiRemoteClient = function(serverAddress, funcResults) {
         }
       });
     } else {
-      this.execServer("/unassign/" + this.currentZone, function(data) {
+      this.execServer("/unassign/" + this.currentZone + "/" + this.remoteId , function(data) {
         self.currentScene = null;
         self.execServer("/subzone/" + self.currentZone, function(data) {
           if (data.hasOwnProperty("active-subzone"))
@@ -292,5 +300,27 @@ MultiRemoteClient = function(serverAddress, funcResults) {
       return null;
 
     return this.remoteDetails["zone"];
+  }
+
+  this.onEvent = function(cmd, source, data) {
+    if (source == this.remoteId) {
+      console.log("Event was caused by us, ignore");
+      return;
+    }
+    switch (cmd) {
+      case "scene":
+        console.log("Scene information");
+        console.log("Scene is " + data.scene);
+        console.log("Our scene is: " + this.getCachedScene());
+        if (data.scene != this.getCachedScene() && this.cbSceneListener) {
+          this.currentScene = data.scene;
+          this.cbSceneListener(data);
+        }
+        break;
+    }
+  }
+
+  this.setSceneListener = function(callback) {
+    this.cbSceneListener = callback;
   }
 }

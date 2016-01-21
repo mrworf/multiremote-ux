@@ -88,6 +88,7 @@
     <script src="dependencies/json2.js"></script>
     <script src="dependencies/jstorage.js"></script>
     <script src="multiremoteclient.js"></script>
+    <script src="multiremote_eventservice.js"></script>
     <script src="multiremotetypes.js"></script>
     <script src="buttonrepeater.js"></script> <!-- Repeater messes up WebView UI ? -->
     <script src="resultwrapper.js"></script>
@@ -96,6 +97,12 @@
       var ux = new UXObjects();
       var result = new ResultWrapper(ux, 500);
       var app = new MultiRemoteClient("magi.sfo.sensenet.nu", function(a,b,c){result.handler(a,b,c);});
+      app.setSceneListener(function(data) {
+        if (data.scene == null)
+          showScenes();
+        else
+          showCommands();
+      });
 
       ux.optimize();
 
