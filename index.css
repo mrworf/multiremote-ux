@@ -25,6 +25,7 @@ a.activity {
   min-width: 154px;
   height: 185px;
   text-align: center;
+  padding: 1px;
 }
 
 div.activity-icon {
@@ -35,8 +36,11 @@ div.activity-icon {
 }
 
 a.active {
-  border: 5px solid purple;
+  border: 1px solid #aaaaff;
+  background-color: #eeeeff;
+  ;
 }
+
 
 #blockui {
   position: absolute;
@@ -51,9 +55,30 @@ a.active {
 }
 
 a.active-zone {
-  border-bottom: 2px solid purple
+  border-bottom: 2px solid #8888ff;
+  border-right: 2px solid #8888ff;
+  border-top: 2px solid #aaaaff;
+  border-left: 2px solid #aaaaff;
+  background-color: #ffffff;
 }
 
 span.hidden {
   visibility: hidden;
+}
+
+/** DISABLE NAVBAR COLLAPSE **/
+.navbar-collapse.collapse {
+display: block!important;
+}
+
+.navbar-nav>li, .navbar-nav {
+float: left !important;
+}
+
+.navbar-nav.navbar-right:last-child {
+margin-right: -15px !important;
+}
+
+.navbar-right {
+float: right!important;
 }

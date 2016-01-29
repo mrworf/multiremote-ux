@@ -123,6 +123,8 @@ MultiRemoteClient = function(serverAddress, funcResults) {
   this.selectZone = function(zone) {
     self = this;
     id = this.getId();
+    if (this.eventService != null)
+      this.eventService.test();
 
     this.execServer("/attach/" + this.remoteId + "/" + zone, function(data) {
       self.currentZone = zone;

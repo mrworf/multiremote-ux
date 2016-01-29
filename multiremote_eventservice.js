@@ -35,6 +35,15 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
     this.socket.close();
   }
 
+  this.isConnected = function() {
+    return (this.socket != null && this.socket.readyState == 1);
+  }
+
+  this.test = function() {
+    if (this.isConnected())
+      this.socket.send("DEBUG");
+  }
+
   this.onOpen = function() {
     this.retryCount = 0;
     this.retryDelay = 0;
