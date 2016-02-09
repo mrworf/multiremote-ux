@@ -27,6 +27,7 @@ MultiRemoteClient = function(serverAddress, funcResults) {
   this.eventService = null;
 
   this.cbSceneListener = null;
+  this.cbZoneListener = null;
 
   /**
    * Initializes the class, making it possible to interact with
@@ -74,6 +75,10 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     }
 
     return result;
+  }
+
+  this.isZoneInUse = function(zone) {
+    return this.lstZones[zone].scene != null;
   }
 
   this.getActiveSubZone = function() {
@@ -311,12 +316,15 @@ MultiRemoteClient = function(serverAddress, funcResults) {
     }
     switch (cmd) {
       case "scene":
-        console.log("Scene information");
-        console.log("Scene is " + data.scene);
-        console.log("Our scene is: " + this.getCachedScene());
         if (data.scene != this.getCachedScene() && this.cbSceneListener) {
           this.currentScene = data.scene;
           this.cbSceneListener(data);
+        }
+        break;
+      case "zone":
+        this.lstZones[data.zone]["scene"] = (data.inuse ? "unknown" : null);
+        if (this.cbZoneListener) {
+          this.cbZoneListener(data);
         }
         break;
     }
@@ -324,5 +332,9 @@ MultiRemoteClient = function(serverAddress, funcResults) {
 
   this.setSceneListener = function(callback) {
     this.cbSceneListener = callback;
+  }
+
+  this.setZoneListener = function(callback) {
+    this.cbZoneListener = callback;
   }
 }

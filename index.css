@@ -1,7 +1,16 @@
 body {
-  overflow: hidden;
+  overflow: auto;
   padding-top: 70px;
   font-size: 20px;
+}
+
+.navbar-nav {
+  margin: 0px;
+}
+
+.navbar-guest {
+  background-color: #f8eeee;
+  border-color: red !important;
 }
 
 h1,h2,h3 {
@@ -38,9 +47,7 @@ div.activity-icon {
 a.active {
   border: 1px solid #aaaaff;
   background-color: #eeeeff;
-  ;
 }
-
 
 #blockui {
   position: absolute;
@@ -60,6 +67,11 @@ a.active-zone {
   border-top: 2px solid #aaaaff;
   border-left: 2px solid #aaaaff;
   background-color: #ffffff;
+  important!color: #777;
+}
+
+a.used-zone {
+  font-weight: bold;
 }
 
 span.hidden {

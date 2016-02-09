@@ -20,7 +20,7 @@
   <body>
     <div id="blockui"></div>
     <!-- Fixed navbar -->
-    <nav class="navbar navbar-default navbar-fixed-top">
+    <nav id="zonebar" class="navbar navbar-default navbar-fixed-top">
       <div class="container">
         <a class="navbar-brand" href="#">multiREMOTE</a>
         <ul class="nav navbar-nav" id="zone-list">
@@ -104,7 +104,16 @@
           showCommands();
       });
 
+      app.setZoneListener(function(data) {
+        setZoneInUse(data.zone, data.inuse);
+      });
+
       ux.optimize();
+
+      function setZoneInUse(zone, inuse) {
+        console.log("Zone " + zone + " is now " + inuse);
+        ux.inuseZone(zone, inuse);
+      }
 
       function sceneHandler(command, done) {
         ux.vibrate(ux.VIBRATE_BTN);
@@ -204,6 +213,7 @@
 
       function showCommands() {
         result.wrap(function(){return app.getCommands();}, function(success, data) {
+          ux.inuseZone(app.getCachedZone(), true);
           // Lets see what we got
           ux.clearCanvas();
           ux.renderSceneInfo(app.getScene(app.getCachedScene()), gotoStandby, function() {ux.vibrate(ux.VIBRATE_BTN); showScenes();});
@@ -235,6 +245,7 @@
         scenes = app.getScenesForZone(app.getCachedZone());
         ux.clearCanvas();
         var z = app.getCachedZone();
+        ux.inuseZone(z, false);
         if (app.hasSubZones(z))
           ux.createSceneSelector(scenes, app.getCachedScene(), selectScene, app.getSubZones(z), app.getActiveSubZone(), selectSubzone);
         else
@@ -247,6 +258,7 @@
         result.wrap(function(){return app.selectZone(zone);}, function(success, data) {
           // Find out which scene we're using for this zone
           ux.highlightZone(zone);
+          ux.showGuestMode(zone != app.getDefaultZone());
           result.wrap(function(){return app.getActiveScene();}, function(success, data) {
             if (data == null) {
               showScenes();
@@ -259,17 +271,15 @@
 
       function updateClock() {
         var t = new Date();
-        $("#time").innerHTML = "Hello";
         if (t.getHours() > 12)
-          $("#time").innerHTML = (t.getHours() - 12) + ":" + (t.getMinutes() > 9 ? "0" : "") + t.getMinutes() + "pm";
+          $("#time").text((t.getHours() - 12) + ":" + (t.getMinutes() < 10 ? "0" : "") + t.getMinutes() + "pm");
         else if (t.getHours() == 0)
-          $("#time").innerHTML = "12:" + (t.getMinutes() > 9 ? "0" : "") + t.getMinutes() + "am";
+          $("#time").text("12:" + (t.getMinutes() < 10 ? "0" : "") + t.getMinutes() + "am");
         else
-          $("#time").innerHTML = t.getHours() + ":" + (t.getMinutes() > 9 ? "0" : "") + t.getMinutes() + "am";
+          $("#time").text(t.getHours() + ":" + (t.getMinutes() < 10 ? "0" : "") + t.getMinutes() + "am");
       }
 
       // Start clock function
-        $("#time").innerHTML = "Hello";
       setInterval(updateClock, 900);
 
       // init the client and remove the modal once done
@@ -278,6 +288,8 @@
         for (var e in z) {
           if (z.hasOwnProperty(e)) {
             ux.addZone(z[e], e, selectZone);
+            if (app.isZoneInUse(e))
+              ux.inuseZone(e, true);
           }
         }
 

@@ -262,6 +262,22 @@ var UXObjects = function() {
     }
   }
 
+  this.inuseZone = function(zone, inuse) {
+    realzone = this.mapZones[zone];
+    if (inuse)
+      $("#" + realzone).addClass("used-zone");
+    else
+      $("#" + realzone).removeClass("used-zone");
+  }
+
+  this.showGuestMode = function(show) {
+    if (show)
+      $("#zonebar").addClass("navbar-guest");
+    else
+      $("#zonebar").removeClass("navbar-guest");
+    //$("#zonebar").removeClass("navbar-default");
+  }
+
   this.clearCanvas = function() {
     $('#canvas').html("");
   }
