@@ -257,17 +257,23 @@ var UXObjects = function() {
     }
 
     if (this.mapZones.hasOwnProperty(zone)) {
-     this.currentZone = this.mapZones[zone];
-     $("#" + this.currentZone).addClass("active-zone");
+      this.currentZone = this.mapZones[zone];
+      $("#" + this.currentZone).addClass("active-zone");
+      // Change background to easily identify what zone you're controlling
+      $("#background").css("background", 'url("img/bg/' + zone + '.jpg")');
+      $("#background").css("background-size", '100%');
+    } else {
+      $("#background").css("background", '');
     }
   }
 
   this.inuseZone = function(zone, inuse) {
     realzone = this.mapZones[zone];
-    if (inuse)
+    if (inuse) {
       $("#" + realzone).addClass("used-zone");
-    else
+    } else {
       $("#" + realzone).removeClass("used-zone");
+    }
   }
 
   this.showGuestMode = function(show) {
@@ -388,6 +394,8 @@ var UXObjects = function() {
       navpagedn: MRTypes.NAVIGATE_PAGEDOWN,
     };
 
+    var repeat = ["navup", "navleft", "navright", "navdown"];
+
     var element = "";
     element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
     element += '  <table style="float: left">';
@@ -434,7 +442,7 @@ var UXObjects = function() {
     element += '  </table>';
     element += '</div>';
 
-    this.createControls(lstCommands, handler, element, mapping);
+    this.createControls(lstCommands, handler, element, mapping, repeat);
   }
 
   this.createVolumeControls = function(lstCommands, handler) {
@@ -473,30 +481,6 @@ var UXObjects = function() {
     $('#shortcut-standby').click(handleStandby);
   }
 
-  this.createApplicationLink = function(sceneInfo, handler) {
-    var hint = this.decodeHinting(sceneInfo["ux-hint"]);
-    if (!hint.hasOwnProperty("android-app")) {
-      return;
-    }
-
-    var element = "";
-    if (this.nativeClient) {
-      element += '<div class="alert alert-info" style="text-align: center; display: inline-block; margin: 5px">';
-      element += '  <h3>This activity is controlled from a separate screen.</h3>';
-      element += '  <br/>';
-      element += '  <button id="appbtn" type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> Take me there</button>';
-      element += '</div>';
-      $('#canvas').append(element);
-
-      $('#appbtn').bind('click', {app: hint["android-app"]}, function(event){handler(event.data.app);});
-    } else {
-      element += '<div class="alert alert-warning" style="text-align: center; display: inline-block; float: left; margin: 5px">';
-      element += '  <h3>This activity uses a separate application to control playback</h3>';
-      element += '</div>';
-      $('#canvas').append(element);
-    }
-  }
-
   this.showMessage = function(sceneInfo, handler) {
     var hint = this.decodeHinting(sceneInfo["ux-hint"]);
     if (!hint.hasOwnProperty("message")) {
@@ -504,10 +488,43 @@ var UXObjects = function() {
     }
 
     var element = "";
-    element += '<div class="alert alert-info" style="text-align: center; display: inline-block; margin: 5px">';
-    element += '  <h3>' + hint["message"] + '</h3>';
+    element += '<div class="alert alert-info" style="text-align: center; display: inline-block; width: 84%; margin: 5px">';
+    element += hint["message"];
     element += '</div>';
     $('#canvas').append(element);
+  }
+
+
+  this.createApplicationLink = function(sceneInfo, handler) {
+    var hint = this.decodeHinting(sceneInfo["ux-hint"]);
+    if (!hint.hasOwnProperty("apps")) {
+      return;
+    }
+    var element = "";
+    if (this.nativeClient) {
+      var apps = hint['apps'].split(':');
+      for (var i in apps) {
+        var app = apps[i];
+        console.log("Checking package: " + app);
+        if (MultiRemoteAPI.hasPackage(app)) {
+          element = '';
+          element += '<a id="app' + i + '" class="btn btn-default activity" href="#" role="button"><div class="activity-icon">';
+          element += '<img src="app://' + app + '" />';
+          element += '</div>';
+          element += '<div style="margin-top: 15px">' + MultiRemoteAPI.getPackageLabel(app) + '</div>';
+          element += '</a>';
+          $('#canvas').append(element);
+          console.log("Binding to:" + '#' + app);
+          $('#app' + i).bind('click', {"app": app}, function(event){handler(event.data.app);});
+        }
+      }
+    } else {
+      element = '';
+      element += '<div class="alert alert-warning" style="text-align: center; display: inline-block; float: left; margin: 5px">';
+      element += '  <h3>This activity uses a separate application to control playback</h3>';
+      element += '</div>';
+      $('#canvas').append(element);
+    }
   }
 
   this.showConflict = function(scene, question, nbrConflicts, handler) {

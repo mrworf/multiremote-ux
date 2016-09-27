@@ -18,6 +18,7 @@
   </head>
 
   <body>
+    <div id="background"></div>
     <div id="blockui"></div>
     <!-- Fixed navbar -->
     <nav id="zonebar" class="navbar navbar-default navbar-fixed-top">
@@ -142,6 +143,7 @@
       }
 
       function appHandler(packagename) {
+        console.log("Launching: " + packagename);
         ux.vibrate(ux.VIBRATE_BTN);
         ux.launchPackage(packagename);
       }
@@ -218,12 +220,11 @@
           ux.clearCanvas();
           ux.renderSceneInfo(app.getScene(app.getCachedScene()), gotoStandby, function() {ux.vibrate(ux.VIBRATE_BTN); showScenes();});
           ux.createVolumeControls(data.zone, zoneHandler);
+          ux.showMessage(app.getScene(app.getCachedScene()), appHandler);
           ux.createPlaybackControls(data.scene, sceneHandler);
           ux.createNavigationControls(data.scene, sceneHandler);
           ux.createApplicationLink(app.getScene(app.getCachedScene()), appHandler);
-          ux.showMessage(app.getScene(app.getCachedScene()), appHandler);
           ux.renderSceneIcon(app.getScene(app.getCachedScene()));
-
         }, true);
       }
 
