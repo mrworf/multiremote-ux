@@ -8,7 +8,37 @@
  *       using the ID which was returned by the function call in the
  *       first place.
  */
-MultiRemoteClient = function(serverAddress, funcResults) {
+MultiRemoteClient = function(funcResults) {
+  this.getUrlParameter = function(sParam) {
+    // See http://www.jquerybyexample.net/2012/06/get-url-parameters-using-jquery.html
+    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+
+    for (i = 0; i < sURLVariables.length; i++) {
+      sParameterName = sURLVariables[i].split('=');
+
+      if (sParameterName[0] === sParam) {
+        return sParameterName[1] === undefined ? true : sParameterName[1];
+      }
+    }
+    return null;
+  };
+
+  // Lets see if we can locate the controller, it should have been
+  // provided via URL or via the MultiRemoteAPI
+  if (typeof MultiRemoteAPI != 'undefined') {
+    // We can talk to the native API
+    serverAddress = MultiRemoteAPI.getController();
+  } else {
+    // Look in URL for "controller=<some address>"
+    serverAddress = this.getUrlParameter("controller");
+  }
+  if (serverAddress == null) {
+    alert("No controller provided");
+    return;
+  }
   this.cfgServerAddress = serverAddress;
   this.cfgAddress = "http://" + serverAddress + ":5000";
   this.cfgResultFunc = funcResults;

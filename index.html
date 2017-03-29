@@ -97,7 +97,7 @@
     <script type="text/javascript">
       var ux = new UXObjects();
       var result = new ResultWrapper(ux, 500);
-      var app = new MultiRemoteClient("magi.sfo.sensenet.nu", function(a,b,c){result.handler(a,b,c);});
+      var app = new MultiRemoteClient(function(a,b,c){result.handler(a,b,c);});
       app.setSceneListener(function(data) {
         if (data.scene == null)
           showScenes();
@@ -223,6 +223,7 @@
           ux.showMessage(app.getScene(app.getCachedScene()), appHandler);
           ux.createPlaybackControls(data.scene, sceneHandler);
           ux.createNavigationControls(data.scene, sceneHandler);
+          ux.createStreamControls(data.scene, sceneHandler);
           ux.createApplicationLink(app.getScene(app.getCachedScene()), appHandler);
           ux.renderSceneIcon(app.getScene(app.getCachedScene()));
         }, true);

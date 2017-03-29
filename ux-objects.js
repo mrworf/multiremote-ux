@@ -445,6 +445,29 @@ var UXObjects = function() {
     this.createControls(lstCommands, handler, element, mapping, repeat);
   }
 
+  this.createStreamControls = function(lstCommands, handler) {
+    var mapping = {
+      streamsubtitle: MRTypes.PLAYBACK_SUBTITLE,
+      streamaudio: MRTypes.PLAYBACK_AUDIO,
+      streamangle: MRTypes.PLAYBACK_ANGLE,
+      streaminfo: MRTypes.PLAYBACK_OSD,
+    };
+
+    var repeat = [];
+
+    var element = "";
+    element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
+    element += '  <div class="btn-group btn-group-lg" role="group" aria-label="...">';
+    element += '    <button id="streamsubtitle" type="button" class="btn btn-default"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span> Subtitle</button>';
+    element += '    <button id="streamaudio" type="button" class="btn btn-default"><span class="glyphicon glyphicon-music" aria-hidden="true"></span> Audio</button>';
+    element += '    <button id="streamangle" type="button" class="btn btn-default"><span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span> Angle</button>';
+    element += '    <button id="streaminfo" type="button" class="btn btn-default"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Info</button>';
+    element += '  </div>';
+    element += '</div>';
+
+    this.createControls(lstCommands, handler, element, mapping, repeat);
+  }
+
   this.createVolumeControls = function(lstCommands, handler) {
     var mapping = {
       volup: MRTypes.VOLUME_UP,
