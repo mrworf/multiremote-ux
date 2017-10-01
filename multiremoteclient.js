@@ -30,7 +30,7 @@ MultiRemoteClient = function(funcResults) {
   // provided via URL or via the MultiRemoteAPI
   if (typeof MultiRemoteAPI != 'undefined') {
     // We can talk to the native API
-    serverAddress = MultiRemoteAPI.getController();
+    serverAddress = MultiRemoteAPI.getControlServer();
   } else {
     // Look in URL for "controller=<some address>"
     serverAddress = this.getUrlParameter("controller");
@@ -40,7 +40,7 @@ MultiRemoteClient = function(funcResults) {
     return;
   }
   this.cfgServerAddress = serverAddress;
-  this.cfgAddress = "http://" + serverAddress + ":5000";
+  this.cfgAddress = serverAddress;
   this.cfgResultFunc = funcResults;
   this.cmdCounter = 0;
 
@@ -137,12 +137,10 @@ MultiRemoteClient = function(funcResults) {
       url: this.cfgAddress + addr,
       type: "GET",
       success: function(obj, info, t) {
-        //console.log("Result OK: " + info);
         successFunction(obj);
       },
       error: function(obj, info, t) {
-        console.log("ResultERR: " + info + " from calling " + addr);
-        errorFuncion(info);
+        errorFunction(info);
       }
     });
   }
@@ -288,7 +286,7 @@ MultiRemoteClient = function(funcResults) {
     id = this.getId();
 
     this.execServer("/command/" + this.remoteId + "/" + type + "/" + command, function(data) {
-      self.returnResult(id, true, null);
+      self.returnResult(id, true, data);
     });
 
     return id;

@@ -139,7 +139,17 @@
         result.wrap(function(){return app.issueCommand("zone", command);}, function(success, data) {
           if (done != undefined)
             done();
+          outofbandHandler(data);
         }, blockUI);
+      }
+
+      function outofbandHandler(data) {
+        // Gets called with all the details from the server command
+        if (data.hasOwnProperty("volume")) {
+          // THIS IS REALLY HANDY!
+          var volume = data["volume"] / 100.0;
+          $("#volcur").text(volume.toFixed(1) + "%");
+        }
       }
 
       function appHandler(packagename) {

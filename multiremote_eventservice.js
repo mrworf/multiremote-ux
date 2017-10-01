@@ -6,7 +6,9 @@
  */
 
 MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
-  this.cfgAddress = "ws://" + serverAddress + ":5000/events/" + remoteId;
+  if (serverAddress.substring(0, 7).toLowerCase() == "http://")
+    serverAddress = serverAddress.substring(7);
+  this.cfgAddress = "ws://" + serverAddress + "/events/" + remoteId;
   this.cfgResultFunc = funcEvents;
   this.socket = null;
   this.retryCount = 0;

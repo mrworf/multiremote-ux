@@ -472,7 +472,7 @@ var UXObjects = function() {
     var mapping = {
       volup: MRTypes.VOLUME_UP,
       voldown: MRTypes.VOLUME_DOWN,
-      volmute: MRTypes.VOLUME_MUTE,
+      //volmute: MRTypes.VOLUME_MUTE,
     };
 
     var repeat = ["volup", "voldown"];
@@ -480,9 +480,10 @@ var UXObjects = function() {
     var element = "";
     element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
     element += '  <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">';
+    element += '    <span id="volcur">???%</span>'
     element += '    <button id="volup" type="button" style="height: 6em; width: 100px;" class="btn btn-default"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span></button>';
     element += '    <button id="voldown" type="button" style="height: 6em; width: 100px" class="btn btn-default"><span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span></button>';
-    element += '    <button id="volmute" type="button" style="height: 4em; width: 100px" class="btn btn-default"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span></button>';
+    //element += '    <button id="volmute" type="button" style="height: 4em; width: 100px" class="btn btn-default"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span></button>';
     element += '  </div>';
     element += '</div>';
 
