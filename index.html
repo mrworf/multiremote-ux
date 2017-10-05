@@ -279,6 +279,7 @@
           if (volumeSliding['lastvolume'] == volume) {
             if (!volumeSliding['movement']) {
               // User most likely tapped, since we didn't see movement (yes, this is not 100% accurate)
+              ux.vibrate(ux.VIBRATE_BTN);
               var r = source.getBoundingClientRect();
               var middle = (r.bottom - r.top)/2;
               result.wrap(
