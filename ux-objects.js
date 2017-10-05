@@ -235,6 +235,12 @@ var UXObjects = function() {
     MultiRemoteAPI.vibrate(millisec);
   }
 
+  this.tick = function() {
+    if (!this.nativeClient) return;
+
+    MultiRemoteAPI.tick();
+  }
+
   this.launchPackage = function(packagename) {
     if (!this.nativeClient) return;
 
@@ -288,6 +294,24 @@ var UXObjects = function() {
     $('#canvas').html("");
   }
 
+  this.resolveEventCoordinates = function(event) {
+    var result = {"ts" : event.timeStamp, 'source' : event.target};
+    if (event.type.substring(0,5) == "touch") {
+      if (event.originalEvent && event.originalEvent.targetTouches && event.originalEvent.targetTouches.length) {
+        var r = event.target.getBoundingClientRect();
+        result['x'] = event.originalEvent.targetTouches[0].clientX - r.left;
+        result['y'] = event.originalEvent.targetTouches[0].clientY - r.top;
+      } else {
+        result['x'] = 0;
+        result['y'] = 0;
+      }
+    } else {
+      result['x'] = event.offsetX;
+      result['y'] = event.offsetY;
+    }
+    return result;
+  }
+
   /**
    * Maps the controls to actual calls. Also allows for repeating buttons.
    *
@@ -326,6 +350,19 @@ var UXObjects = function() {
           $("#" + btn).bind('touchend',   {btn: m, command: c, rep: copy}, function(event) {event.data.rep.stop(event.data.btn); });
           $("#" + btn).bind('touchcancel',   {btn: m, command: c, rep: copy}, function(event) {event.data.rep.stop(event.data.btn); });
           $("#" + btn).bind('mousedown', {btn: m, command: c, rep: copy}, function(event) {var e = event.data.command; event.data.rep.start(event.data.btn, function(done){handler(e, done);}); });
+        } else if (repeat == "slider") {
+          var thiz = this;
+          /*
+          $("#" + m).bind('mouseout',    {command: c}, function(event){handler(event.data.command, "end", thiz.resolveEventCoordinates(event));});
+          $("#" + m).bind('mouseup',     {command: c}, function(event){handler(event.data.command, "end", thiz.resolveEventCoordinates(event));});
+          $("#" + m).bind('mousedown',   {command: c}, function(event){handler(event.data.command, "start", thiz.resolveEventCoordinates(event));});
+          $("#" + m).bind('mousemove',   {command: c}, function(event){handler(event.data.command, "move", thiz.resolveEventCoordinates(event));});
+          */
+
+          $("#" + m).bind('touchstart',  {command: c}, function(event){handler(event.data.command, "start", thiz.resolveEventCoordinates(event));});
+          $("#" + m).bind('touchmove',   {command: c}, function(event){handler(event.data.command, "move" , thiz.resolveEventCoordinates(event));});
+          $("#" + m).bind('touchend',    {command: c}, function(event){handler(event.data.command, "end"  , thiz.resolveEventCoordinates(event));});
+          $("#" + m).bind('touchcancel', {command: c}, function(event){handler(event.data.command, "end"  , thiz.resolveEventCoordinates(event));});
         } else {
           $('#' + m).bind('click', {command: c}, function(event){handler(event.data.command);});
         }
@@ -468,7 +505,7 @@ var UXObjects = function() {
     this.createControls(lstCommands, handler, element, mapping, repeat);
   }
 
-  this.createVolumeControls = function(lstCommands, handler) {
+  this.createVolumeControls_old = function(lstCommands, handler) {
     var mapping = {
       volup: MRTypes.VOLUME_UP,
       voldown: MRTypes.VOLUME_DOWN,
@@ -488,6 +525,31 @@ var UXObjects = function() {
     element += '</div>';
 
     this.createControls(lstCommands, handler, element, mapping, repeat);
+  }
+
+  this.createVolumeControls = function(lstCommands, handler) {
+    var mapping = {
+      volup: MRTypes.VOLUME_UP,
+      voldown: MRTypes.VOLUME_DOWN,
+      volset: MRTypes.VOLUME_SET,
+    };
+
+    var element = "";
+    element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
+    element += '  <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">';
+    element += '    <span id="volcur">???%</span>'
+    element += '    <button id="volset" type="button" style="height: 12em; width: 100px;" class="btn btn-default">';
+    element += '      <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span>';
+    element += '      <br>';
+    element += '      <br>';
+    element += '      <br>';
+    element += '      <br>';
+    element += '      <span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span>';
+    element += '    </button>';
+    element += '  </div>';
+    element += '</div>';
+
+    this.createControls(lstCommands, handler, element, mapping, "slider");
   }
 
   this.renderSceneInfo = function(sceneInfo, handleStandby, handleScene) {

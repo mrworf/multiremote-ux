@@ -134,6 +134,7 @@ MultiRemoteClient = function(funcResults) {
   this.execServer = function(addr, successFunction, errorFunction) {
     //console.log("execServer(" + addr + ")");
     $.ajax({
+      async: true,
       url: this.cfgAddress + addr,
       type: "GET",
       success: function(obj, info, t) {

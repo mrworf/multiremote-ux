@@ -95,6 +95,7 @@
     <script src="resultwrapper.js"></script>
     <script src="ux-objects.js"></script>
     <script type="text/javascript">
+      var volume = 0;
       var ux = new UXObjects();
       var result = new ResultWrapper(ux, 500);
       var app = new MultiRemoteClient(function(a,b,c){result.handler(a,b,c);});
@@ -147,8 +148,8 @@
         // Gets called with all the details from the server command
         if (data.hasOwnProperty("volume")) {
           // THIS IS REALLY HANDY!
-          var volume = data["volume"] / 100.0;
-          $("#volcur").text(volume.toFixed(1) + "%");
+          volume = data["volume"];
+          $("#volcur").text( (volume / 100.0).toFixed(1) + "%");
         }
       }
 
@@ -229,7 +230,7 @@
           // Lets see what we got
           ux.clearCanvas();
           ux.renderSceneInfo(app.getScene(app.getCachedScene()), gotoStandby, function() {ux.vibrate(ux.VIBRATE_BTN); showScenes();});
-          ux.createVolumeControls(data.zone, zoneHandler);
+          ux.createVolumeControls(data.zone, volumeHandler);
           ux.showMessage(app.getScene(app.getCachedScene()), appHandler);
           ux.createPlaybackControls(data.scene, sceneHandler);
           ux.createNavigationControls(data.scene, sceneHandler);
@@ -253,6 +254,78 @@
         }, true);
       }
 
+      var volumeSliding = null;
+
+      function volumeSet(newvolume) {
+        result.wrap(
+          function() {
+            return app.issueCommand("zone", "volume-set/" + newvolume);
+          },
+          function(success, data) {
+            outofbandHandler(data);
+          },
+          false
+        );
+      }
+
+      // TODO: CLEAN THIS MESS UP!
+      function volumeHandler(command, action, data) {
+        var x = data['x'];
+        var y = data['y'];
+        var ts = data['ts'];
+        var source = data['source'];
+
+        if (volumeSliding && action == "end") {
+          if (volumeSliding['lastvolume'] == volume) {
+            if (!volumeSliding['movement']) {
+              // User most likely tapped, since we didn't see movement (yes, this is not 100% accurate)
+              var r = source.getBoundingClientRect();
+              var middle = (r.bottom - r.top)/2;
+              result.wrap(
+                function() {
+                  return app.issueCommand("zone", volumeSliding['initial-y'] > middle ? "volume-down" : "volume-up");
+                },
+                function(success, data) {
+                  outofbandHandler(data);
+                },
+                false
+              );
+            }
+          } else {
+            volumeSet(volume); // User changed volume by sliding
+          }
+          volumeSliding = null
+        } else if (action == "start") {
+          volumeSliding = {'lastvolume' : volume, 'movement':false, 'initial-y':y};
+        } else if (volumeSliding != null) {
+          if (!volumeSliding.hasOwnProperty('y')) {
+            volumeSliding['y'] = y;
+            volumeSliding['py'] = y;
+            volumeSliding['ts'] = ts;
+            volumeSliding['processing'] = false;
+            return;
+          }
+          volumeSliding['movement'] = true;
+          var dY = Math.abs(volumeSliding['py'] - y);
+          volumeSliding['py'] = y;
+          var dTS = Math.abs(volumeSliding['ts'] - ts);
+          if ( dY > 1 ) {
+            var dY = volumeSliding['y'] - y;
+            volumeSliding["y"] = y;
+            var change = Math.floor(dY);
+            if (change) {
+              volume = Math.min(10000, Math.max(0, volume + change*10));
+              $("#volcur").text( (volume / 100.0).toFixed(1) + "%");
+
+              if (dTS > 50) {
+                volumeSliding["ts"] = ts;
+                ux.tick();
+              }
+            }
+          }
+        }
+      }
+
       function showScenes() {
         scenes = app.getScenesForZone(app.getCachedZone());
         ux.clearCanvas();
@@ -262,6 +335,7 @@
           ux.createSceneSelector(scenes, app.getCachedScene(), selectScene, app.getSubZones(z), app.getActiveSubZone(), selectSubzone);
         else
           ux.createSceneSelector(scenes, app.getCachedScene(), selectScene);
+        //ux.createVolumeControls2({"volume-set":{"type":5}}, volumeHandler);
       }
 
       function selectZone(zone, subzone) {
