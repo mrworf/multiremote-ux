@@ -9,6 +9,9 @@
  *       first place.
  */
 MultiRemoteClient = function(funcResults) {
+  // Determine if we're running inside special app
+  this.nativeClient = (typeof MultiRemoteAPI != 'undefined');
+
   this.getUrlParameter = function(sParam) {
     // See http://www.jquerybyexample.net/2012/06/get-url-parameters-using-jquery.html
     var sPageURL = decodeURIComponent(window.location.search.substring(1)),
@@ -28,7 +31,7 @@ MultiRemoteClient = function(funcResults) {
 
   // Lets see if we can locate the controller, it should have been
   // provided via URL or via the MultiRemoteAPI
-  if (typeof MultiRemoteAPI != 'undefined') {
+  if (this.nativeClient) {
     // We can talk to the native API
     serverAddress = MultiRemoteAPI.getControlServer();
   } else {
@@ -41,6 +44,7 @@ MultiRemoteClient = function(funcResults) {
   }
   this.cfgServerAddress = serverAddress;
   this.cfgAddress = serverAddress;
+  this.cfgPort = 5000;
   this.cfgResultFunc = funcResults;
   this.cmdCounter = 0;
 
@@ -83,6 +87,7 @@ MultiRemoteClient = function(funcResults) {
             self.remoteDetails = data;
             self.eventService = new MultiRemoteEventService(self.cfgServerAddress, self.remoteId, function(type, source, data) {self.onEvent(type, source, data);});
             self.eventService.connect();
+
             self.returnResult(id, true, null);
           });
         } else {
@@ -93,6 +98,20 @@ MultiRemoteClient = function(funcResults) {
     });
 
     return id;
+  }
+
+  this.setLogHandler = function(handler) {
+    if (this.nativeClient) {
+      // Setup so we can send debug info
+      MultiRemoteAPI.setLogHandler(handler);
+    } else {
+      console.log("We're not running in nativeClient");
+    }
+  }
+
+  this.logMessage = function(tag, level, message) {
+    if (this.eventService)
+      this.eventService.logMessage(tag, level, message);
   }
 
   this.getZones = function() {
@@ -132,18 +151,26 @@ MultiRemoteClient = function(funcResults) {
   }
 
   this.execServer = function(addr, successFunction, errorFunction) {
-    //console.log("execServer(" + addr + ")");
-    $.ajax({
-      async: true,
-      url: this.cfgAddress + addr,
-      type: "GET",
-      success: function(obj, info, t) {
-        successFunction(obj);
-      },
-      error: function(obj, info, t) {
-        errorFunction(info);
-      }
-    });
+    if (!errorFunction)
+      errorFunction = function(e) {};
+
+    console.log("execServer(" + this.cfgAddress + addr + ")");
+    if (this.eventService != null) {
+      console.log("Using the faster path of the event service for " + addr)
+      this.eventService.execute(addr, successFunction, errorFunction);
+    } else {
+      $.ajax({
+        async: true,
+        url: "http://" + this.cfgAddress + ":" + this.cfgPort + addr,
+        type: "GET",
+        success: function(obj, info, t) {
+          successFunction(obj);
+        },
+        error: function(obj, info, t) {
+          errorFunction(info);
+        }
+      });
+    }
   }
 
   this.getId = function() {

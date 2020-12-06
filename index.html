@@ -27,6 +27,8 @@
         <ul class="nav navbar-nav" id="zone-list">
         </ul>
         <ul class="nav navbar-nav navbar-right">
+          <li><span id="battery-charge" class="navbar-brand" style="padding-right: 0px"></span></li>
+          <li><span id="battery" class="navbar-brand"></span></li>
           <li><span id="time" class="navbar-brand"></span></li>
           <li><a href="#"><span class="glyphicon glyphicon-cog"></span></a></li>
         </ul>
@@ -106,11 +108,22 @@
           showCommands();
       });
 
+      // Special, this is passed on to native app so needs to be string
+      app.setLogHandler("onLogMessage");
+
       app.setZoneListener(function(data) {
         setZoneInUse(data.zone, data.inuse);
       });
 
       ux.optimize();
+
+      function onLogMessage(tag, level, message) {
+        //console.log("Yay! Message from Log.*:");
+        //console.log('Tag: ' + tag);
+        //console.log('Level: ' + level);
+        //console.log('Message: ' + message);
+        app.logMessage(tag, level, message);
+      }
 
       function setZoneInUse(zone, inuse) {
         console.log("Zone " + zone + " is now " + inuse);
@@ -356,6 +369,20 @@
         }, true);
       }
 
+      function updateMisc() {
+        updateClock();
+        updateBattery();
+      }
+
+      function updateBattery() {
+        p = ux.getBatteryPercent();
+        $("#battery").html(p + "%");
+        if (ux.isBatteryCharging())
+          $("#battery-charge").html('<i class="glyphicon glyphicon-flash"></i>')
+        else
+          $("#battery-charge").html('')
+      }
+
       function updateClock() {
         var t = new Date();
         if (t.getHours() > 12)
@@ -367,7 +394,7 @@
       }
 
       // Start clock function
-      setInterval(updateClock, 900);
+      setInterval(updateMisc, 900);
 
       // init the client and remove the modal once done
       result.wrap(function(){return app.init();}, function() {

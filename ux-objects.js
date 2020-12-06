@@ -235,6 +235,18 @@ var UXObjects = function() {
     MultiRemoteAPI.vibrate(millisec);
   }
 
+  this.getBatteryPercent = function() {
+    if (!this.nativeClient) return 0;
+
+    return MultiRemoteAPI.getBatteryPercent();
+  }
+
+  this.isBatteryCharging = function() {
+    if (!this.nativeClient) return false;
+
+    return MultiRemoteAPI.isBatteryCharging();
+  }
+
   this.tick = function() {
     if (!this.nativeClient) return;
 
