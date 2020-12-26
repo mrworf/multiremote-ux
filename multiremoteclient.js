@@ -31,16 +31,21 @@ MultiRemoteClient = function(funcResults) {
   if (typeof MultiRemoteAPI != 'undefined') {
     // We can talk to the native API
     serverAddress = MultiRemoteAPI.getControlServer();
+    serverPort = 5000; // Should be fetched too
   } else {
     // Look in URL for "controller=<some address>"
     serverAddress = this.getUrlParameter("controller");
+    // Look in URL for "port=<some port>"
+    serverPort = parseInt(this.getUrlParameter("port"));
+    if (isNaN(serverPort))
+      serverPort = 5000;
   }
   if (serverAddress == null) {
     alert("No controller provided");
     return;
   }
   this.cfgServerAddress = serverAddress;
-  this.cfgAddress = serverAddress;
+  this.cfgServerPort = serverPort;
   this.cfgResultFunc = funcResults;
   this.cmdCounter = 0;
 
@@ -73,15 +78,17 @@ MultiRemoteClient = function(funcResults) {
     this.execServer("/zone", function(data) {
       self.lstZones = data;
       self.execServer("/scene", function(data) {
+        console.log(data);
         self.lstScenes = data;
         if (self.remoteId != null) {
           self.execServer("/remotes/" + self.remoteId, function(data) {
+            console.log(data);
             if (data.hasOwnProperty("error")) {
               self.remoteId = null;
               $.jStorage.deleteKey("remote-id");
             }
             self.remoteDetails = data;
-            self.eventService = new MultiRemoteEventService(self.cfgServerAddress, self.remoteId, function(type, source, data) {self.onEvent(type, source, data);});
+            self.eventService = new MultiRemoteEventService(self.cfgServerAddress + ':' + self.cfgServerPort, self.remoteId, function(type, source, data) {self.onEvent(type, source, data);});
             self.eventService.connect();
             self.returnResult(id, true, null);
           });
@@ -132,16 +139,24 @@ MultiRemoteClient = function(funcResults) {
   }
 
   this.execServer = function(addr, successFunction, errorFunction) {
-    //console.log("execServer(" + addr + ")");
+    if (errorFunction == null) {
+      errorFunction = function(a) { console.log(a); };
+    }
+    if (successFunction == null) {
+      successFunction = function(a) { ; };
+    }
+    
+    finalUrl = "http://" + this.cfgServerAddress + ":" + this.cfgServerPort + addr;
+    console.log("execServer(" + finalUrl + ")");
     $.ajax({
       async: true,
-      url: this.cfgAddress + addr,
+      url: finalUrl,
       type: "GET",
       success: function(obj, info, t) {
         successFunction(obj);
       },
       error: function(obj, info, t) {
-        errorFunction(info);
+        errorFunction("execServer(" + finalUrl + ") --> " + obj.statusText);
       }
     });
   }
