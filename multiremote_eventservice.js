@@ -14,7 +14,9 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
   this.retryCount = 0;
   this.retryDelay = 0;
   this.retryEnabled = true;
-
+  this.execId = 0;
+  this.execInFlight = [];
+  
   this.connect = function() {
     var self = this;
 
@@ -50,6 +52,18 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
     this.retryCount = 0;
     this.retryDelay = 0;
     this.socket.send("SUBSCRIBE *");
+  
+    // Make sure all pending commands are sent...
+    console.log(this.execInFlight);
+    for (exec in this.execInFlight) {
+      exec = this.execInFlight[exec];
+      console.log(exec);
+      if (exec.state == "pending") {
+        var msg = "EXECUTE {\"id\":" + exec.execId + ",\"addr\":\"" + exec.path + "\"}";
+        this.socket.send(msg);
+        exec.state = "sent";
+      }
+    }
   }
 
   this.onMessage = function(event) {
@@ -78,4 +92,24 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
       setTimeout(function() { self.connect(); }, this.retryDelay);
     }
   }
+
+  this.execute = function(path, success, error) {
+    var data = {
+      "execId" : this.execId++,
+      "path" : path,
+      "success" : success,
+      "error" : error,
+      "state" : "pending"
+    };
+    this.execInFlight.push(data)
+    var msg = "EXECUTE {\"id\":" + data.execId + ",\"" + data.path + "\"}";
+    if (this.isConnected()) {
+      console.log('Sending ' + msg);
+      this.socket.send(msg);
+      data.state = "sent"
+    } else {
+      console.log('Command queued for connection');
+    }
+  }
+ 
 }

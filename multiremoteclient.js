@@ -145,20 +145,26 @@ MultiRemoteClient = function(funcResults) {
     if (successFunction == null) {
       successFunction = function(a) { ; };
     }
-    
+
     finalUrl = "http://" + this.cfgServerAddress + ":" + this.cfgServerPort + addr;
-    console.log("execServer(" + finalUrl + ")");
-    $.ajax({
-      async: true,
-      url: finalUrl,
-      type: "GET",
-      success: function(obj, info, t) {
-        successFunction(obj);
-      },
-      error: function(obj, info, t) {
-        errorFunction("execServer(" + finalUrl + ") --> " + obj.statusText);
-      }
-    });
+
+    if (this.eventService != null) {
+      console.log("Using the faster path of the event service for " + addr)
+      this.eventService.execute(addr, successFunction, errorFunction);
+    } else {
+      console.log("execServer(" + finalUrl + ")");
+      $.ajax({
+        async: true,
+        url: finalUrl,
+        type: "GET",
+        success: function(obj, info, t) {
+          successFunction(obj);
+        },
+        error: function(obj, info, t) {
+          errorFunction("execServer(" + finalUrl + ") --> " + obj.statusText);
+        }
+      });
+    }
   }
 
   this.getId = function() {
