@@ -31,7 +31,7 @@ MultiRemoteClient = function(funcResults) {
   if (typeof MultiRemoteAPI != 'undefined') {
     // We can talk to the native API
     serverAddress = MultiRemoteAPI.getControlServer();
-    serverPort = 5000; // Should be fetched too
+    serverPort = MultiRemoteAPI.getControlServerPort();
   } else {
     // Look in URL for "controller=<some address>"
     serverAddress = this.getUrlParameter("controller");
