@@ -9,6 +9,7 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
   if (serverAddress.substring(0, 7).toLowerCase() == "http://")
     serverAddress = serverAddress.substring(7);
   this.cfgAddress = "ws://" + serverAddress + "/events/" + remoteId;
+  this.uuid = remoteId;
   this.cfgResultFunc = funcEvents;
   this.socket = null;
   this.retryCount = 0;
@@ -44,8 +45,11 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
   }
 
   this.test = function() {
+    ;
+    /*
     if (this.isConnected())
       this.socket.send("DEBUG");
+    */
   }
 
   this.onOpen = function() {
@@ -69,7 +73,40 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
   this.onMessage = function(event) {
     var data = JSON.parse(event.data);
     console.log("EventService: " + event.data);
-    this.cfgResultFunc(data.type, data.source, data.data);
+    // Some things are handled internally here
+    switch(data.type) {
+      case "result":
+        this.handleResult(data);
+        break;
+      default:
+        this.cfgResultFunc(data.type, data.source, data.data);
+      }
+  }
+
+  this.handleResult = function(event) {
+    if (event.source != this.uuid) {
+      console.log("Warning, got exec result for other remote, ignoring (us: " + this.uuid + ", them: " + event.source + ")");
+      return;
+    }
+
+    var result = event.data;
+    // Locate the ID for which we have a result
+    console.log("Looking for a matching exec");
+    for (index in this.execInFlight) {
+      var exec = this.execInFlight[index];
+      console.log(exec);
+      if (exec.execId == result.id) {
+        // Remove it, since we now resolved it
+        this.execInFlight.splice(index, 1);
+        console.log("Found a matching exec in-flight");
+        if (exec.success)
+          exec.success(result.result);
+        else
+          console.log("ERROR: No success method defined");
+        return;
+      }
+    }
+    console.log("Warning! No matching in-flight exec for " + result.id + ", dropping it");
   }
 
   this.onError = function(event) {
@@ -102,7 +139,7 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
       "state" : "pending"
     };
     this.execInFlight.push(data)
-    var msg = "EXECUTE {\"id\":" + data.execId + ",\"" + data.path + "\"}";
+    var msg = "EXECUTE {\"id\":" + data.execId + ",\"addr\":\"" + data.path + "\"}";
     if (this.isConnected()) {
       console.log('Sending ' + msg);
       this.socket.send(msg);
