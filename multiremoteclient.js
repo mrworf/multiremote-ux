@@ -191,6 +191,7 @@ MultiRemoteClient = function(funcResults) {
         else
           self.currentSubZone = null;
         self.returnResult(id, true, null);
+        self.updateZoneState(zone);
       });
     });
 
@@ -361,6 +362,17 @@ MultiRemoteClient = function(funcResults) {
     return this.remoteDetails["zone"];
   }
 
+  this.updateZoneState = function(zone) {
+    // Update values as needed
+    state = this.zoneState[data.zone]
+    if (state.hasOwnProperty("volume")) {
+      volume = state["volume"];
+
+      // Sketchy to just update like this
+      $("#volcur").text( (volume / 100.0).toFixed(1) + "%");
+    }
+  }
+
   this.onEvent = function(cmd, source, data) {
     if (source == this.remoteId) {
       console.log("Event was caused by us, ignore");
@@ -382,17 +394,7 @@ MultiRemoteClient = function(funcResults) {
           console.log('State update is unrelated to us (them = ' + data.zone + ', us = ' + this.getCachedZone() + ')')
           break;
         }
-
-        // Update values as needed
-        state = this.zoneState[data.zone]
-        if (state.hasOwnProperty("volume")) {
-          volume = state["volume"];
-
-          // Sketchy to just update like this
-          $("#volcur").text( (volume / 100.0).toFixed(1) + "%");
-        }
-
-        // This is sketchy!
+        this.updateZoneState(data.zone);
         break;
       case "scene":
         if (data.scene != this.getCachedScene() && this.cbSceneListener) {
