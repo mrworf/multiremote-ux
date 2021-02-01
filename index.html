@@ -240,6 +240,7 @@
           ux.createStreamControls(data.scene, sceneHandler);
           ux.createApplicationLink(app.getScene(app.getCachedScene()), appHandler);
           ux.renderSceneIcon(app.getScene(app.getCachedScene()));
+          app.updateZoneState(app.getCachedZone());
         }, true);
       }
 
@@ -339,7 +340,6 @@
           ux.createSceneSelector(scenes, app.getCachedScene(), selectScene, app.getSubZones(z), app.getActiveSubZone(), selectSubzone);
         else
           ux.createSceneSelector(scenes, app.getCachedScene(), selectScene);
-        //ux.createVolumeControls2({"volume-set":{"type":5}}, volumeHandler);
       }
 
       function selectZone(zone, subzone) {

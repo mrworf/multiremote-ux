@@ -191,7 +191,6 @@ MultiRemoteClient = function(funcResults) {
         else
           self.currentSubZone = null;
         self.returnResult(id, true, null);
-        self.updateZoneState(zone);
       });
     });
 
@@ -363,8 +362,12 @@ MultiRemoteClient = function(funcResults) {
   }
 
   this.updateZoneState = function(zone) {
+    // Don't update if we don't have state
+    if (!this.zoneState.hasOwnProperty(zone))
+      return;
+
     // Update values as needed
-    state = this.zoneState[data.zone]
+    state = this.zoneState[zone]
     if (state.hasOwnProperty("volume")) {
       volume = state["volume"];
 
