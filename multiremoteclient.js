@@ -52,6 +52,8 @@ MultiRemoteClient = function(funcResults) {
   this.lstZones = {};
   this.lstScenes = {};
 
+  this.zoneState = {};
+
   this.currentZone = null;
   this.currentScene = null;
   this.currentSubZone = null;
@@ -366,19 +368,31 @@ MultiRemoteClient = function(funcResults) {
     }
     switch (cmd) {
       case "state":
-        // State update, this will apply to us if we're looking at that zone
+        // See if we have state for the zone
+        if (!this.zoneState.hasOwnProperty(data.zone)) {
+          this.zoneState[data.zone] = {}
+        }
+
+        if (data.hasOwnProperty("volume")) {
+          this.zoneState[data.zone]["volume"] = data["volume"];
+        }
+
+        // Don't bother updating if we're not looking at the relevant zone
         if (data.zone != this.getCachedZone()) {
           console.log('State update is unrelated to us (them = ' + data.zone + ', us = ' + this.getCachedZone() + ')')
           break;
         }
 
-        // It applies to us, so let's handle the update
+        // Update values as needed
+        state = this.zoneState[data.zone]
+        if (state.hasOwnProperty("volume")) {
+          volume = state["volume"];
 
-        // This is sketchy!
-        if (data.hasOwnProperty("volume")) {
-          volume = data["volume"];
+          // Sketchy to just update like this
           $("#volcur").text( (volume / 100.0).toFixed(1) + "%");
         }
+
+        // This is sketchy!
         break;
       case "scene":
         if (data.scene != this.getCachedScene() && this.cbSceneListener) {
