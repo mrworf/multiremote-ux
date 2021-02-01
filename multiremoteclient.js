@@ -365,6 +365,21 @@ MultiRemoteClient = function(funcResults) {
       return;
     }
     switch (cmd) {
+      case "state":
+        // State update, this will apply to us if we're looking at that zone
+        if (data.zone != this.getCachedZone()) {
+          console.log('State update is unrelated to us (them = ' + data.zone + ', us = ' + this.getCachedZone() + ')')
+          break;
+        }
+
+        // It applies to us, so let's handle the update
+
+        // This is sketchy!
+        if (data.hasOwnProperty("volume")) {
+          volume = data["volume"];
+          $("#volcur").text( (volume / 100.0).toFixed(1) + "%");
+        }
+        break;
       case "scene":
         if (data.scene != this.getCachedScene() && this.cbSceneListener) {
           this.currentScene = data.scene;
