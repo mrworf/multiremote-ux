@@ -173,7 +173,7 @@ var UXObjects = function() {
 
     element += '<div style="text-align: center; display: inline-block; float: left; width: 100%;">'; // <h1 style="margin-top: 0px">Choose activity</h1>';
     if (szList != undefined) {
-      element += '<div class="btn-group btn-group-lg" role="group" aria-label="...">';
+      element += '<div class="btn-group btn-group-lg subzone" role="group" aria-label="...">';
       var i = 0;
       for (var sz in szList) {
         var t = "default";
@@ -443,37 +443,37 @@ var UXObjects = function() {
     element += '        <button id="navpagedn" type="button" style="float: left; height: 4em; margin-top: 3px;" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-left: 10px">';
-    element += '          <button id="navhome" type="button"  style="width: 100px; height: 75px" class="btn btn-info">Home</button>';
+    element += '          <button id="navhome" type="button"  style="width: 85px; height: 65px" class="btn btn-info">Home</button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; vertical-align: bottom">';
-    element += '          <button id="navup" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></button>';
+    element += '          <button id="navup" type="button" style="width: 85px; height: 65px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-up" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-right: 10px">';
-    element += '          <button id="navtop" type="button" style="width: 100px; height: 75px" class="btn btn-info">Top menu</button>';
+    element += '          <button id="navtop" type="button" style="width: 85px; height: 65px" class="btn btn-info">Top menu</button>';
     element += '      </td>';
     element += '    </tr>';
 
     element += '    <tr>';
     element += '      <td style="padding: 3px; padding-left: 10px">';
-    element += '        <button id="navleft" type="button"  style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button>';
+    element += '        <button id="navleft" type="button"  style="width: 85px; height: 65px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px">';
-    element += '        <button id="naventer" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg">OK</button>';
+    element += '        <button id="naventer" type="button" style="width: 85px; height: 65px" class="btn btn-default btn-lg">OK</button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-right: 10px">';
-    element += '        <button id="navright" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button>';
+    element += '        <button id="navright" type="button" style="width: 85px; height: 65px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '    </tr>';
 
     element += '    <tr>';
     element += '      <td style="padding: 3px; padding-left: 10px">';
-    element += '          <button id="navback" type="button" style="width: 100px; height: 75px" class="btn btn-info">Back</button>';
+    element += '          <button id="navback" type="button" style="width: 85px; height: 65px" class="btn btn-info">Back</button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; vertical-align: top">';
-    element += '        <button id="navdown" type="button" style="width: 100px; height: 75px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></button>';
+    element += '        <button id="navdown" type="button" style="width: 85px; height: 65px" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></button>';
     element += '      </td>';
     element += '      <td style="padding: 3px; padding-right: 10px">';
-    element += '          <button id="navmenu" type="button" style="width: 100px; height: 75px" class="btn btn-info">Menu</button>';
+    element += '          <button id="navmenu" type="button" style="width: 85px; height: 65px" class="btn btn-info">Menu</button>';
     element += '      </td>';
     element += '    </tr>';
     element += '  </table>';
@@ -505,28 +505,6 @@ var UXObjects = function() {
     this.createControls(lstCommands, handler, element, mapping, repeat);
   }
 
-  this.createVolumeControls_old = function(lstCommands, handler) {
-    var mapping = {
-      volup: MRTypes.VOLUME_UP,
-      voldown: MRTypes.VOLUME_DOWN,
-      //volmute: MRTypes.VOLUME_MUTE,
-    };
-
-    var repeat = ["volup", "voldown"];
-
-    var element = "";
-    element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
-    element += '  <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">';
-    element += '    <span id="volcur">???%</span>'
-    element += '    <button id="volup" type="button" style="height: 6em; width: 100px;" class="btn btn-default"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span></button>';
-    element += '    <button id="voldown" type="button" style="height: 6em; width: 100px" class="btn btn-default"><span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span></button>';
-    //element += '    <button id="volmute" type="button" style="height: 4em; width: 100px" class="btn btn-default"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span></button>';
-    element += '  </div>';
-    element += '</div>';
-
-    this.createControls(lstCommands, handler, element, mapping, repeat);
-  }
-
   this.createVolumeControls = function(lstCommands, handler) {
     var mapping = {
       volup: MRTypes.VOLUME_UP,
@@ -535,13 +513,13 @@ var UXObjects = function() {
     };
 
     var element = "";
-    element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px">';
-    element += '  <div class="btn-group-vertical btn-group-lg" role="group" aria-label="...">';
-    element += '    <span id="volcur">???%</span>'
-    element += '    <button id="volset" type="button" style="height: 12em; width: 100px;" class="btn btn-default">';
+    element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px; width: 13%">';
+    element += '  <div class="btn-group-vertical btn-group-lg" role="group" aria-label="..." style="width: 100%;">';
+    element += '    <button id="volset" type="button" style="height: 11em; width: 100%; margin-top: 5px" class="btn btn-default">';
     element += '      <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span>';
     element += '      <br>';
     element += '      <br>';
+    element += '      <span id="volcur"></span>';
     element += '      <br>';
     element += '      <br>';
     element += '      <span class="glyphicon glyphicon-volume-down" aria-hidden="true"></span>';
@@ -555,7 +533,7 @@ var UXObjects = function() {
   this.renderSceneInfo = function(sceneInfo, handleStandby, handleScene) {
     var element = "";
 
-    element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: left; margin: 5px; width: 100%">';
+    element += '<div class="well well-sm" style="text-align: center; display: inline-block; float: center; margin: 5px; width: 100%">';
     element += '  <button id="shortcut-standby" type="button" style="font-size: 12pt; width: 100px; float:left; height: 4em" class="btn btn-default"><span class="glyphicon glyphicon-off"></span><br>Standby</button>';
     element += '<div style="display:inline-block">' + sceneInfo.name + "<br><small>" + sceneInfo.description + "</small></div>";
     element += '  <button id="shortcut-scenes" type="button" style="font-size: 12pt; width: 100px; float:right; height: 4em" class="btn btn-default">Change<br>Activity</button>';

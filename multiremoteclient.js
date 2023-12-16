@@ -44,6 +44,7 @@ MultiRemoteClient = function(funcResults) {
     alert("No controller provided");
     return;
   }
+
   this.cfgServerAddress = serverAddress;
   this.cfgServerPort = serverPort;
   this.cfgResultFunc = funcResults;
@@ -65,6 +66,7 @@ MultiRemoteClient = function(funcResults) {
 
   this.cbSceneListener = null;
   this.cbZoneListener = null;
+  this.cbVolumeListener = null;
 
   /**
    * Initializes the class, making it possible to interact with
@@ -92,6 +94,13 @@ MultiRemoteClient = function(funcResults) {
             self.remoteDetails = data;
             self.eventService = new MultiRemoteEventService(self.cfgServerAddress + ':' + self.cfgServerPort, self.remoteId, function(type, source, data) {self.onEvent(type, source, data);});
             self.eventService.connect();
+
+            // Connect event listener
+            if (typeof MultiRemoteAPI != 'undefined') {
+              console.log('Starting to listen for events by the app');
+              MultiRemoteAPI.setEventListener("onApplicationEvent");
+            }
+
             self.returnResult(id, true, null);
           });
         } else {
@@ -103,6 +112,16 @@ MultiRemoteClient = function(funcResults) {
 
     return id;
   }
+
+  this.onApplicationEvent = function(evt, data) {
+    console.log("Incoming event from application: " + evt);
+    switch(evt) {
+      case "EVENT_APP_RESUMED":
+        // We must assume that network connections are dead
+        self.eventService.refreshConnection();
+        break;
+    }
+  };
 
   this.getZones = function() {
     var result = {};
@@ -151,10 +170,10 @@ MultiRemoteClient = function(funcResults) {
     finalUrl = "http://" + this.cfgServerAddress + ":" + this.cfgServerPort + addr;
 
     if (this.eventService != null) {
-      console.log("Using the faster path of the event service for " + addr)
       this.eventService.execute(addr, successFunction, errorFunction);
     } else {
-      console.log("execServer(" + finalUrl + ")");
+      console.log("Using non-websocket communication");
+      //console.log("execServer(" + finalUrl + ")");
       $.ajax({
         async: true,
         url: finalUrl,
@@ -180,8 +199,6 @@ MultiRemoteClient = function(funcResults) {
   this.selectZone = function(zone) {
     self = this;
     id = this.getId();
-    if (this.eventService != null)
-      this.eventService.test();
 
     this.execServer("/attach/" + this.remoteId + "/" + zone, function(data) {
       self.currentZone = zone;
@@ -372,7 +389,10 @@ MultiRemoteClient = function(funcResults) {
       volume = state["volume"];
 
       // Sketchy to just update like this
-      $("#volcur").text( (volume / 100.0).toFixed(1) + "%");
+      if (this.cbVolumeListener) {
+        this.cbVolumeListener(volume)
+      }
+      //$("#volcur").text( (volume / 100.0).toFixed(1) + "%");
     }
   }
 
@@ -420,5 +440,9 @@ MultiRemoteClient = function(funcResults) {
 
   this.setZoneListener = function(callback) {
     this.cbZoneListener = callback;
+  }
+
+  this.setVolumeListener = function(callback) {
+    this.cbVolumeListener = callback;
   }
 }

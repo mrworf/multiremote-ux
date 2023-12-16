@@ -1,7 +1,7 @@
 body {
   overflow: auto;
-  padding-top: 70px;
-  font-size: 20px;
+  padding-top: 60px;
+  font-size: 14pt;
 }
 
 #background {
@@ -15,9 +15,21 @@ body {
   /* opacity: 0.3; */
 }
 
+.navbar, .navbar-brand, .navbar-default, .navbar-fixed-top, .nav .active {
+  height: 10px;
+}
+
+#zonebar, .navbar-brand {
+  font-size: 12pt;
+}
+
+#zonebar {
+}
+
 .navbar-nav {
   margin: 0px;
 }
+
 
 .navbar-guest {
   background-color: #f8eeee;
@@ -41,18 +53,49 @@ li.dropdown-header {
 }
 
 a.activity {
-  margin: 10px;
-  min-width: 154px;
-  height: 185px;
+  margin: 5px;
+  min-width: 150px;
+  height: 115px;
   text-align: center;
   padding: 1px;
 }
 
+div.subzone {
+  margin-bottom: 10px;
+}
+
+a.activity div:nth-child(2) {
+  float: bottom;
+  font-size: 16px;
+}
+
 div.activity-icon {
+  padding-top: 10px;
   width: 100%;
-  height: 128px;
-  line-height: 128px;
+  height: 68px;
+  line-height: 68px;
   margin: auto;
+}
+
+div.activity-icon img {
+  max-width: 140px;
+  max-height: 100%;
+
+}
+
+#volcur {
+  color: grey;
+}
+
+button#volset::after {
+  content:'';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: var(--volume-indicator);
+  background-color: #000099; /* The color you want to fill with */
+  opacity: 0.2;
 }
 
 div.well {

@@ -95,10 +95,17 @@
     <script src="resultwrapper.js"></script>
     <script src="ux-objects.js"></script>
     <script type="text/javascript">
-      var volume = 0;
+      var zoneVolume = 0;
       var ux = new UXObjects();
       var result = new ResultWrapper(ux, 500);
+
       var app = new MultiRemoteClient(function(a,b,c){result.handler(a,b,c);});
+
+      // Forwarding function for the client
+      function onApplicationEvent(evt, data) {
+        app.onApplicationEvent(evt, data);
+      }
+
       app.setSceneListener(function(data) {
         if (data.scene == null)
           showScenes();
@@ -110,7 +117,17 @@
         setZoneInUse(data.zone, data.inuse);
       });
 
+      app.setVolumeListener(function(data) {
+        zoneVolume = data;
+        refreshVolume(data)
+      });
+
       ux.optimize();
+
+      function refreshVolume() {
+        $("#volcur").text( (zoneVolume / 100.0).toFixed(1) + "%");
+        document.querySelector('button#volset').style.setProperty('--volume-indicator', (zoneVolume / 100.0).toFixed(0) + "%");
+      }
 
       function setZoneInUse(zone, inuse) {
         console.log("Zone " + zone + " is now " + inuse);
@@ -146,14 +163,6 @@
 
       function outofbandHandler(data) {
         return;
-
-        // DOES NOTHING ANYMORE
-        // Gets called with all the details from the server command
-        if (data.hasOwnProperty("volume")) {
-          // THIS IS REALLY HANDY!
-          volume = data["volume"];
-          $("#volcur").text( (volume / 100.0).toFixed(1) + "%");
-        }
       }
 
       function appHandler(packagename) {
@@ -260,7 +269,7 @@
 
       var volumeSliding = null;
 
-      function volumeSet(newvolume) {
+      function setVolume(newvolume) {
         result.wrap(
           function() {
             return app.issueCommand("zone", "volume-set/" + newvolume);
@@ -280,7 +289,7 @@
         var source = data['source'];
 
         if (volumeSliding && action == "end") {
-          if (volumeSliding['lastvolume'] == volume) {
+          if (volumeSliding['lastvolume'] == zoneVolume) {
             if (!volumeSliding['movement']) {
               // User most likely tapped, since we didn't see movement (yes, this is not 100% accurate)
               ux.vibrate(ux.VIBRATE_BTN);
@@ -297,7 +306,8 @@
               );
             }
           } else {
-            volumeSet(volume); // User changed volume by sliding
+            // We must now issue the change to the backend since user isn't moving anymore
+            setVolume(zoneVolume);
           }
           volumeSliding = null
         } else if (action == "start") {
@@ -319,8 +329,9 @@
             volumeSliding["y"] = y;
             var change = Math.floor(dY);
             if (change) {
-              volume = Math.min(10000, Math.max(0, volume + change*10));
-              $("#volcur").text( (volume / 100.0).toFixed(1) + "%");
+              // Record the change and show a representation
+              zoneVolume = Math.min(10000, Math.max(0, zoneVolume + change*10));
+              refreshVolume();
 
               if (dTS > 50) {
                 volumeSliding["ts"] = ts;

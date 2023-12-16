@@ -44,15 +44,19 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
     return (this.socket != null && this.socket.readyState == 1);
   }
 
-  this.test = function() {
-    ;
-    /*
-    if (this.isConnected())
-      this.socket.send("DEBUG");
-    */
+  this.refreshConnection = function() {
+    // We're essentially calling close() but with retry which forces a reconnect
+    console.log("Asked to reinitializing the websocket")
+    if (this.socket == null) {
+      this.connect();
+    } else {
+      this.retryEnabled = true;
+      this.socket.close();
+    }
   }
 
   this.onOpen = function() {
+    console.log('Websocket connected');
     this.retryCount = 0;
     this.retryDelay = 0;
     this.socket.send("SUBSCRIBE *");
@@ -91,14 +95,14 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
 
     var result = event.data;
     // Locate the ID for which we have a result
-    console.log("Looking for a matching exec");
+    //console.log("Looking for a matching exec");
     for (index in this.execInFlight) {
       var exec = this.execInFlight[index];
       console.log(exec);
       if (exec.execId == result.id) {
         // Remove it, since we now resolved it
         this.execInFlight.splice(index, 1);
-        console.log("Found a matching exec in-flight");
+        //console.log("Found a matching exec in-flight");
         if (exec.success)
           exec.success(result.result);
         else
@@ -120,12 +124,12 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
     if (this.retryEnabled) {
       this.retryCount++;
       if (this.retryCount > 1 && this.retryDelay == 0)
-        this.retryDelay = 5000;
-      else if ((this.retryDelay*2) < 60000)
+        this.retryDelay = 500;
+      else if ((this.retryDelay*2) < 3000)
         this.retryDelay *= 2;
       else
-        this.retryDelay = 60000;
-      console.log("EventService: Reconnecting in %d seconds", this.retryDelay/1000);
+        this.retryDelay = 3000;
+      console.log("EventService: Reconnecting in " + this.retryDelay/1000 + " seconds");
       setTimeout(function() { self.connect(); }, this.retryDelay);
     }
   }
