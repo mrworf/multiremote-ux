@@ -92,13 +92,17 @@ MultiRemoteClient = function(funcResults) {
               $.jStorage.deleteKey("remote-id");
             }
             self.remoteDetails = data;
-            self.eventService = new MultiRemoteEventService(self.cfgServerAddress + ':' + self.cfgServerPort, self.remoteId, function(type, source, data) {self.onEvent(type, source, data);});
+            self.eventService = new MultiRemoteEventService(self.cfgServerAddress + ':' + self.cfgServerPort, self.remoteId, function(type, source, data) {self.onEvent(type, source, data);}, function() {self.onReconnect();});
             self.eventService.connect();
 
             // Connect event listener
             if (typeof MultiRemoteAPI != 'undefined') {
               console.log('Starting to listen for events by the app');
-              MultiRemoteAPI.setEventListener("onApplicationEvent");
+              if (typeof MultiRemoteAPI.setEventListener != 'undefined') {
+                MultiRemoteAPI.setEventListener("onApplicationEvent");
+              } else {
+                console.log('ERROR: No setEventListener function available');
+              }
             }
 
             self.returnResult(id, true, null);
@@ -111,6 +115,11 @@ MultiRemoteClient = function(funcResults) {
     });
 
     return id;
+  }
+
+  this.onReconnect = function() {
+    console.log('We regained connection, notify server of what zone we are in');
+    this.selectZone(this.currentZone);
   }
 
   this.onApplicationEvent = function(evt, data) {
@@ -399,6 +408,7 @@ MultiRemoteClient = function(funcResults) {
   this.onEvent = function(cmd, source, data) {
     if (source == this.remoteId) {
       console.log("Event was caused by us, ignore");
+      console.log(data);
       return;
     }
     switch (cmd) {
@@ -409,6 +419,15 @@ MultiRemoteClient = function(funcResults) {
         }
 
         if (data.hasOwnProperty("volume")) {
+          // Ranges from 0 - 10000 (divided by 100, so 0-100.00)
+          nv = data["volume"];
+          if (nv < 0 || nv > 10000) {
+            console.log("Got insane volume of " + nv + ", will normalize it");
+            if (nv < 0)
+              nv = 0;
+            else if (nv > 10000)
+              nv = 10000;
+          }
           this.zoneState[data.zone]["volume"] = data["volume"];
         }
 

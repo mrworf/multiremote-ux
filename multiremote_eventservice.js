@@ -5,16 +5,18 @@
  * changes made by other devices/remotes.
  */
 
-MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
+MultiRemoteEventService = function(serverAddress, remoteId, funcEvents, funcReconnected) {
   if (serverAddress.substring(0, 7).toLowerCase() == "http://")
     serverAddress = serverAddress.substring(7);
   this.cfgAddress = "ws://" + serverAddress + "/events/" + remoteId;
   this.uuid = remoteId;
   this.cfgResultFunc = funcEvents;
+  this.cfgReconnectedFunc = funcReconnected;
   this.socket = null;
   this.retryCount = 0;
   this.retryDelay = 0;
   this.retryEnabled = true;
+  this.retryInProgress = false;
   this.execId = 0;
   this.execInFlight = [];
   
@@ -37,6 +39,7 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
     if (this.socket == null)
       return;
     this.retryEnabled = false;
+    this.retryInProgress = false;
     this.socket.close();
   }
 
@@ -59,6 +62,12 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
     console.log('Websocket connected');
     this.retryCount = 0;
     this.retryDelay = 0;
+
+    if (this.retryInProgress) {
+      this.retryInProgress = false;
+      if (this.cfgReconnectedFunc) // Notify that we're back
+        this.cfgReconnectedFunc();
+    }
     this.socket.send("SUBSCRIBE *");
   
     // Make sure all pending commands are sent...
@@ -122,6 +131,7 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents) {
 
     this.socket = null;
     if (this.retryEnabled) {
+      this.retryInProgress = true;
       this.retryCount++;
       if (this.retryCount > 1 && this.retryDelay == 0)
         this.retryDelay = 500;
