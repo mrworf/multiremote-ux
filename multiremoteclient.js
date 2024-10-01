@@ -68,6 +68,25 @@ MultiRemoteClient = function(funcResults) {
   this.cbZoneListener = null;
   this.cbVolumeListener = null;
 
+  function dumpObject(data, base) {
+    // Count the depth of the base by the dots
+    var depth = base.split('.').length;
+
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        // Test if it's an object
+        if (typeof data[key] === 'object') {
+          console.log(base + '.' + key + ":");
+          if (depth < 10)
+            dumpObject(data[key] , base + '.' + key);
+          else
+            console.log("Skipping object dump, too deep");
+        } else
+          console.log(base + '.' + key + ": " + data[key]);
+      }
+    }        
+  }
+
   /**
    * Initializes the class, making it possible to interact with
    * the server.
@@ -75,18 +94,20 @@ MultiRemoteClient = function(funcResults) {
   this.init = function() {
     // Load the zone and scene list
     self = this;
-    id = this.getId();
+    cmdId = this.getId();
 
     this.remoteId = $.jStorage.get("remote-id");
 
-    this.execServer("/zone", function(data) {
+    this.execServer("/zone", cmdId, function(id, data) {
       self.lstZones = data;
-      self.execServer("/scene", function(data) {
-        console.log(data);
+      self.execServer("/scene", id, function(id, data) {
+        id = _id;
+        console.log('data = ' + JSON.stringify(data, null, 2));
         self.lstScenes = data;
         if (self.remoteId != null) {
-          self.execServer("/remotes/" + self.remoteId, function(data) {
-            console.log(data);
+          self.execServer("/remotes/" + self.remoteId, id, function(id, data) {
+            id = _id;
+            console.log('data = ' + JSON.stringify(data, null, 2));
             if (data.hasOwnProperty("error")) {
               self.remoteId = null;
               $.jStorage.deleteKey("remote-id");
@@ -114,7 +135,7 @@ MultiRemoteClient = function(funcResults) {
       });
     });
 
-    return id;
+    return cmdId;
   }
 
   this.onReconnect = function() {
@@ -168,37 +189,55 @@ MultiRemoteClient = function(funcResults) {
     return this.lstZones[zone]["subzones"];
   }
 
-  this.execServer = function(addr, successFunction, errorFunction) {
+  this.execServer = function(addr, id, successFunction, errorFunction) {
     if (errorFunction == null) {
-      errorFunction = function(a) { console.log(a); };
+      errorFunction = function(id, a) { console.log(a); };
     }
     if (successFunction == null) {
-      successFunction = function(a) { ; };
+      successFunction = function(id, a) { ; };
     }
 
     finalUrl = "http://" + this.cfgServerAddress + ":" + this.cfgServerPort + addr;
 
+    // Test if id is a number
+    if (isNaN(id)) {
+      console.log("ERROR: ID is not a number");
+      console.log('id = ' +  JSON.stringify(id, null, 2));
+      // print callstack
+      console.log(new Error().stack);
+      return;
+    }
+
+    console.log("execServer(" + finalUrl + ")" + " id = " + id);
+
     if (this.eventService != null) {
-      this.eventService.execute(addr, successFunction, errorFunction);
+      this.eventService.execute(addr, id, successFunction, errorFunction);
     } else {
       console.log("Using non-websocket communication");
-      //console.log("execServer(" + finalUrl + ")");
+      console.log("execServer(" + finalUrl + ")");
       $.ajax({
         async: true,
         url: finalUrl,
         type: "GET",
         success: function(obj, info, t) {
-          successFunction(obj);
+          _id = id;
+          successFunction(_id, obj);
         },
         error: function(obj, info, t) {
-          errorFunction("execServer(" + finalUrl + ") --> " + obj.statusText);
+          _id = id;
+          errorFunction(_id, "execServer(" + finalUrl + ") --> " + obj.statusText);
         }
       });
     }
   }
 
   this.getId = function() {
-    return ++this.cmdCounter;
+    /*
+    _id = ++this.cmdCounter;
+    console.log('New AppId is ' + _id);
+    return _id;
+    */
+   return ++this.cmdCounter;
   }
 
   this.returnResult = function(id, success, data) {
@@ -207,11 +246,11 @@ MultiRemoteClient = function(funcResults) {
 
   this.selectZone = function(zone) {
     self = this;
-    id = this.getId();
+    cmdId = this.getId();
 
-    this.execServer("/attach/" + this.remoteId + "/" + zone, function(data) {
+    this.execServer("/attach/" + this.remoteId + "/" + zone, cmdId, function(id, data) {
       self.currentZone = zone;
-      self.execServer("/subzone/" + zone, function(data) {
+      self.execServer("/subzone/" + zone, id, function(id, data) {
         if (data.hasOwnProperty("active-subzone"))
           self.currentSubZone = data["active-subzone"];
         else
@@ -220,19 +259,20 @@ MultiRemoteClient = function(funcResults) {
       });
     });
 
-    return id;
+    return cmdId;
   }
 
   this.selectSubZone = function(subzone) {
     self = this;
-    id = this.getId();
+    cmdId = this.getId();
 
-    this.execServer("/subzone/" + this.currentZone + "/" + subzone, function(data) {
+    this.execServer("/subzone/" + this.currentZone + "/" + subzone, cmdId, function(id, data) {
       self.currentSubZone = subzone;
+      console.log('My id is ' + id);
       self.returnResult(id, true, null);
     });
 
-    return id;
+    return cmdId;
   }
 
   /**
@@ -255,10 +295,10 @@ MultiRemoteClient = function(funcResults) {
 
     // Select the scene
     self = this;
-    id = this.getId();
+    cmdId = this.getId();
 
     if (scene != null) {
-      this.execServer("/assign/" + this.currentZone + "/" + this.remoteId + "/" + scene + optOverride, function(data) {
+      this.execServer("/assign/" + this.currentZone + "/" + this.remoteId + "/" + scene + optOverride, cmdId, function(id, data) {
         if (data.hasOwnProperty("conflict")) {
           self.returnResult(id, false, data);
         } else {
@@ -267,9 +307,9 @@ MultiRemoteClient = function(funcResults) {
         }
       });
     } else {
-      this.execServer("/unassign/" + this.currentZone + "/" + this.remoteId , function(data) {
+      this.execServer("/unassign/" + this.currentZone + "/" + this.remoteId , cmdId, function(id, data) {
         self.currentScene = null;
-        self.execServer("/subzone/" + self.currentZone, function(data) {
+        self.execServer("/subzone/" + self.currentZone, id, function(id, data) {
           if (data.hasOwnProperty("active-subzone"))
             self.currentSubZone = data["active-subzone"];
           else
@@ -279,19 +319,19 @@ MultiRemoteClient = function(funcResults) {
       });
     }
 
-    return id;
+    return cmdId;
   }
 
   this.getCommands = function() {
     // Load the commands available to us
     self = this;
-    id = this.getId();
+    cmdId = this.getId();
 
-    this.execServer("/command/" + this.remoteId, function(data) {
+    this.execServer("/command/" + this.remoteId, cmdId, function(id, data) {
       self.returnResult(id, true, data["commands"]);
     });
 
-    return id;
+    return cmdId;
   }
 
   this.getScenesForZone = function(zone) {
@@ -307,14 +347,14 @@ MultiRemoteClient = function(funcResults) {
   this.getActiveScene = function() {
     // Load the zone and scene list
     self = this;
-    id = this.getId();
+    cmdId = this.getId();
 
-    this.execServer("/zone/" + this.currentZone, function(data) {
+    this.execServer("/zone/" + this.currentZone, cmdId, function(id, data) {
       self.currentScene = data.scene;
       self.returnResult(id, true, data.scene);
     });
 
-    return id;
+    return cmdId;
   }
 
   this.getCachedScene = function() {
@@ -333,13 +373,13 @@ MultiRemoteClient = function(funcResults) {
   this.issueCommand = function(type, command) {
     // Send command to active scene and zone
     self = this;
-    id = this.getId();
+    cmdId = this.getId();
 
-    this.execServer("/command/" + this.remoteId + "/" + type + "/" + command, function(data) {
+    this.execServer("/command/" + this.remoteId + "/" + type + "/" + command, cmdId, function(id, data) {
       self.returnResult(id, true, data);
     });
 
-    return id;
+    return cmdId;
   }
 
   /**
@@ -356,9 +396,9 @@ MultiRemoteClient = function(funcResults) {
    */
   this.registerRemote = function(pin, name, desc, zone) {
     self = this;
-    id = this.getId();
+    cmdId = this.getId();
 
-    this.execServer("/register/" + pin + "/" + name + "/" + desc + "/" + zone, function(data) {
+    this.execServer("/register/" + pin + "/" + name + "/" + desc + "/" + zone, cmdId, function(id, data) {
       if (data.hasOwnProperty("error") || !data.hasOwnProperty("uuid")) {
         self.returnResult(id, false, null);
       } else {
@@ -366,7 +406,7 @@ MultiRemoteClient = function(funcResults) {
         self.remoteId = data["uuid"];
 
         // Reload info from server (to keep us consistent with init)
-        self.execServer("/remotes/" + self.remoteId, function(data) {
+        self.execServer("/remotes/" + self.remoteId, id, function(id, data) {
           if (data.hasOwnProperty("error")) {
             self.remoteId = null;
             $.jStorage.deleteKey("remote-id");
@@ -377,7 +417,7 @@ MultiRemoteClient = function(funcResults) {
         });
       }
     });
-    return id;
+    return cmdId;
   }
 
   this.getDefaultZone = function() {

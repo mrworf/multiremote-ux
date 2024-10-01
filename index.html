@@ -126,7 +126,11 @@
 
       function refreshVolume() {
         $("#volcur").text( (zoneVolume / 100.0).toFixed(1) + "%");
-        document.querySelector('button#volset').style.setProperty('--volume-indicator', (zoneVolume / 100.0).toFixed(0) + "%");
+        obj = document.querySelector('button#volset');
+        if (obj)
+          obj.style.setProperty('--volume-indicator', (zoneVolume / 100.0).toFixed(0) + "%");
+        else
+          console.log("No volume set button found");
       }
 
       function setZoneInUse(zone, inuse) {

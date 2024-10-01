@@ -19,9 +19,12 @@ var ResultWrapper = function(ux, timeout) {
    * @param data Any resulting data (or null)
    */
   this.handler = function(id, success, data) {
+    console.log("Wrap: Queued commands: " + JSON.stringify(this.cmdmap, null, 2));
     if (id in this.cmdmap) {
       state = this.cmdmap[id];
       delete this.cmdmap[id];
+
+      console.log('Wrap: #' + id + ' Result: ' + success + ' (Extra data: ' + JSON.stringify(data, null, 2) + ')');
 
       if (state.blocking) {
         //console.log(state);
@@ -34,6 +37,8 @@ var ResultWrapper = function(ux, timeout) {
         }
       }
       state.handler(success, data);
+    } else {
+      console.log("ERROR: No handler for command #" + id);
     }
   }
 
@@ -48,13 +53,15 @@ var ResultWrapper = function(ux, timeout) {
    * @param blockUI Wether or not to show the visual indicator when things take too long
    */
   this.wrap = function(funcCommand, funcFollowUp, blockUI) {
+    console.log("Wrap: Wrapping function " + funcCommand);
     id = funcCommand();
+    console.log("Wrap: #" + id + " \"" + funcCommand + "\"");
     self2 = this;
     this.cmdmap[id] = {handler: funcFollowUp, blocking: blockUI, timerid: 0};
     if (blockUI) {
       this.ux.blockUI(true);
       if (this.blockcount++ == 0) {
-        this.blocktimer = setTimeout(function(){console.log("Timeout: " + id); if (id in self2.cmdmap) self2.ux.showBusyIndicator(true);}, this.timeout);
+        this.blocktimer = setTimeout(function(){_id = id; console.log("Wrap: #" + _id + ' timeout'); if (_id in self2.cmdmap) self2.ux.showBusyIndicator(true); }, this.timeout);
       }
     }
   }

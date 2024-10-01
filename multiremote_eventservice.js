@@ -17,7 +17,7 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents, funcReco
   this.retryDelay = 0;
   this.retryEnabled = true;
   this.retryInProgress = false;
-  this.execId = 0;
+  this.execId = 1000;
   this.execInFlight = [];
   
   this.connect = function() {
@@ -71,11 +71,11 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents, funcReco
     this.socket.send("SUBSCRIBE *");
   
     // Make sure all pending commands are sent...
-    console.log(this.execInFlight);
+    console.log('Cmds in-flight: ' + JSON.stringify(this.execInFlight, null, 2));
     for (exec in this.execInFlight) {
       exec = this.execInFlight[exec];
-      console.log(exec);
       if (exec.state == "pending") {
+        console.log('Cmd pending, sending: ' + JSON.stringify(exec, null, 2));
         var msg = "EXECUTE {\"id\":" + exec.execId + ",\"addr\":\"" + exec.path + "\"}";
         this.socket.send(msg);
         exec.state = "sent";
@@ -85,7 +85,7 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents, funcReco
 
   this.onMessage = function(event) {
     var data = JSON.parse(event.data);
-    console.log("EventService: " + event.data);
+    console.log("EventService: Received " + event.data);
     // Some things are handled internally here
     switch(data.type) {
       case "result":
@@ -107,14 +107,15 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents, funcReco
     //console.log("Looking for a matching exec");
     for (index in this.execInFlight) {
       var exec = this.execInFlight[index];
-      console.log(exec);
       if (exec.execId == result.id) {
         // Remove it, since we now resolved it
         this.execInFlight.splice(index, 1);
-        //console.log("Found a matching exec in-flight");
-        if (exec.success)
-          exec.success(result.result);
-        else
+        console.log("Found a matching cmd in-flight for " + result.id);
+        console.log('Pending cmd = ' + JSON.stringify(exec, null, 2));
+        if (exec.success) {
+          console.log('Calling success function for ' + result.id + ': ' + exec.success);
+          exec.success(exec.cmdId, result.result);
+        } else
           console.log("ERROR: No success method defined");
         return;
       }
@@ -133,24 +134,34 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents, funcReco
     if (this.retryEnabled) {
       this.retryInProgress = true;
       this.retryCount++;
+
       if (this.retryCount > 1 && this.retryDelay == 0)
         this.retryDelay = 500;
       else if ((this.retryDelay*2) < 3000)
         this.retryDelay *= 2;
       else
         this.retryDelay = 3000;
+
+      // DEBUG ONLY REMOVE ME
+      /*
+      if (this.retryDelay == 0) {
+        this.retryDelay = 10000;
+      }
+        */
+
       console.log("EventService: Reconnecting in " + this.retryDelay/1000 + " seconds");
       setTimeout(function() { self.connect(); }, this.retryDelay);
     }
   }
 
-  this.execute = function(path, success, error) {
+  this.execute = function(path, id, success, error) {
     var data = {
       "execId" : this.execId++,
       "path" : path,
       "success" : success,
       "error" : error,
-      "state" : "pending"
+      "state" : "pending",
+      "cmdId" : id,
     };
     this.execInFlight.push(data)
     var msg = "EXECUTE {\"id\":" + data.execId + ",\"addr\":\"" + data.path + "\"}";
@@ -159,7 +170,7 @@ MultiRemoteEventService = function(serverAddress, remoteId, funcEvents, funcReco
       this.socket.send(msg);
       data.state = "sent"
     } else {
-      console.log('Command queued for connection');
+      console.log('Command #' + data.execId + ' queued for connection');
     }
   }
  
